@@ -39,10 +39,23 @@ password reset links and OAuth redirect URIs.
 
 ## Environment variables
 
-Required: `MONGODB_URI`, `JWT_SECRET`, `GOOGLE_CLIENT_ID`,
-`GOOGLE_CLIENT_SECRET`, `TWITTER_CONSUMER_KEY`, `TWITTER_CONSUMER_SECRET`,
-`EMAIL_ADDRESS`, `EMAIL_PASSWORD`, `NEXT_PUBLIC_DONATION_LINK`,
-`NEXT_PUBLIC_SUPPORT_EMAIL`, `NEXT_PUBLIC_FEEDBACK_EMAIL`.
+Core (required): `MONGODB_URI`, `JWT_SECRET`.
+
+Required for the features they enable:
+
+- `GOOGLE_CLIENT_ID` + `GOOGLE_CLIENT_SECRET` — Google sign-in (hidden when
+  unset).
+- `TWITTER_CONSUMER_KEY` + `TWITTER_CONSUMER_SECRET` — Twitter sign-in
+  (hidden when unset).
+- `EMAIL_ADDRESS` + `EMAIL_PASSWORD` — password reset emails. Without them,
+  reset requests fail; email/password sign-in still works.
+- `NEXT_PUBLIC_DONATION_LINK` — donation link on Contribute (the section is
+  hidden when unset).
+- `NEXT_PUBLIC_SUPPORT_EMAIL` / `NEXT_PUBLIC_FEEDBACK_EMAIL` — mail links on
+  Help and Contribute (email text is omitted when unset).
+
+`APP_URL` is optional on Vercel (see above); set it to the externally
+reachable URL when hosting elsewhere.
 
 - Values are in the git-ignored `.env.local` locally and in Vercel's project
   settings for deployments.
@@ -50,7 +63,8 @@ Required: `MONGODB_URI`, `JWT_SECRET`, `GOOGLE_CLIENT_ID`,
   build or redeploy afterward.
 - Any Vercel env change needs a new deployment to take effect.
 - `JWT_SECRET` must be a long random string (`openssl rand -base64 32`).
-  Rotating it signs out every session.
+  Rotating it signs out every session. Session versioning also revokes old
+  tokens whenever a password is set or changed.
 
 ## OAuth
 

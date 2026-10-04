@@ -10,8 +10,14 @@ export default function ContributePage() {
       <h2 className="mt-10 text-[1.75rem]">Send Feedback</h2>
       <hr />
       <p>
-        The easiest way to contribute is to send us your feedback by email (
-        <a href={`mailto:${FEEDBACK_EMAIL}`}>{FEEDBACK_EMAIL}</a>) or twitter (
+        The easiest way to contribute is to send us your feedback by{" "}
+        {FEEDBACK_EMAIL && (
+          <>
+            email (
+            <a href={`mailto:${FEEDBACK_EMAIL}`}>{FEEDBACK_EMAIL}</a>) or{" "}
+          </>
+        )}
+        twitter (
         <a href="https://twitter.com/ejuicr" target="_blank" rel="noreferrer">
           @ejuicr
         </a>
@@ -40,7 +46,7 @@ export default function ContributePage() {
       <p>
         The source code for ejuicr is available on{" "}
         <a
-          href="https://github.com/jimfarrugia/ejuicr"
+          href="https://github.com/ejuicr/ejuicr-next"
           target="_blank"
           rel="noreferrer"
         >
@@ -52,7 +58,7 @@ export default function ContributePage() {
         If you&apos;d like to report a bug or formally suggest a new feature,
         please create a new issue on the{" "}
         <a
-          href="https://github.com/Jimfarrugia/ejuicr/issues"
+          href="https://github.com/ejuicr/ejuicr-next/issues"
           target="_blank"
           rel="noreferrer"
         >
@@ -65,13 +71,17 @@ export default function ContributePage() {
         codebase. We kindly ask that you clearly document the changes you have
         made.
       </p>
-      <h2 className="mt-10 text-[1.75rem]">Donate</h2>
-      <hr />
-      <p>
-        If you&apos;d like to throw a couple bucks our way to help with server
-        costs you can send your donation{" "}
-        <a href={`${DONATION_LINK}`}>here</a>.
-      </p>
+      {DONATION_LINK && (
+        <>
+          <h2 className="mt-10 text-[1.75rem]">Donate</h2>
+          <hr />
+          <p>
+            If you&apos;d like to throw a couple bucks our way to help with
+            server costs you can send your donation{" "}
+            <a href={DONATION_LINK}>here</a>.
+          </p>
+        </>
+      )}
     </>
   );
 }

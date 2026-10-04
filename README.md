@@ -50,20 +50,22 @@ Open the application at [http://localhost:3000](http://localhost:3000).
 | ---------------------------- | -------- | ------------------------------------------------------------------ |
 | `MONGODB_URI`                | Yes      | MongoDB connection string.                                         |
 | `JWT_SECRET`                 | Yes      | Secret used to sign session and password reset tokens.             |
-| `APP_URL`                    | Yes      | Public URL of the app; used for OAuth callbacks and reset links.   |
+| `APP_URL`                    | No       | Public URL; recommended for OAuth callbacks and reset links. Falls back to Vercel URLs or the request origin. |
 | `GOOGLE_CLIENT_ID`           | No       | Enables Google sign-in when set with the secret.                   |
 | `GOOGLE_CLIENT_SECRET`       | No       | Google OAuth client secret.                                        |
 | `TWITTER_CONSUMER_KEY`       | No       | Enables Twitter sign-in when set with the secret.                  |
 | `TWITTER_CONSUMER_SECRET`    | No       | Twitter OAuth 1.0a consumer secret.                                |
 | `EMAIL_ADDRESS`              | No       | Gmail address used to send password reset emails.                  |
 | `EMAIL_PASSWORD`             | No       | Gmail app password for the address above.                          |
-| `NEXT_PUBLIC_DONATION_LINK`  | No       | Donation link shown on the Contribute page.                        |
-| `NEXT_PUBLIC_SUPPORT_EMAIL`  | No       | Support address shown on the Help page.                            |
-| `NEXT_PUBLIC_FEEDBACK_EMAIL` | No       | Feedback address shown on the Help and Contribute pages.           |
+| `NEXT_PUBLIC_DONATION_LINK`  | No       | Donation link on Contribute; the section is hidden when unset.     |
+| `NEXT_PUBLIC_SUPPORT_EMAIL`  | No       | Support address on Help; the email option is hidden when unset.    |
+| `NEXT_PUBLIC_FEEDBACK_EMAIL` | No       | Feedback address on Help and Contribute; hidden when unset.        |
 
-Features that depend on optional providers still work without them: Google
-and Twitter buttons are hidden when their credentials are missing, and the
-rest of the calculator, account, and email/password flows keep working.
+Optional integrations degrade gracefully: Google and Twitter buttons are
+hidden when their credentials are missing, and missing support/donation
+values omit the corresponding UI instead of rendering empty links. Email and
+password sign-in still works without mail credentials, but **password reset
+emails require `EMAIL_ADDRESS` and `EMAIL_PASSWORD`**.
 
 ### OAuth callback URLs
 

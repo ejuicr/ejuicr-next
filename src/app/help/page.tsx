@@ -9,14 +9,17 @@ export default function HelpPage() {
       <hr />
       <h2 className="mt-10 text-[1.75rem]">Contact Support</h2>
       <hr />
+      {SUPPORT_EMAIL && (
+        <p>
+          If you&apos;re having trouble with ejuicr and would like to reach out
+          you can send an email to{" "}
+          <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a> and someone
+          will get back to you.
+        </p>
+      )}
       <p>
-        If you&apos;re having trouble with ejuicr and would like to reach out
-        you can send an email to{" "}
-        <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a> and someone will
-        get back to you.
-      </p>
-      <p>
-        You can also send a tweet or a direct message on Twitter to{" "}
+        {SUPPORT_EMAIL ? "You can also" : "You can"} send a tweet or a direct
+        message on Twitter to{" "}
         <a href="https://twitter.com/ejuicr" target="_blank" rel="noreferrer">
           @ejuicr
         </a>{" "}
@@ -25,8 +28,14 @@ export default function HelpPage() {
       <h2 className="mt-10 text-[1.75rem]">Send Feedback</h2>
       <hr />
       <p>
-        We appreciate any feedback you&apos;d like to share! Please email{" "}
-        <a href={`mailto:${FEEDBACK_EMAIL}`}>{FEEDBACK_EMAIL}</a> or tweet{" "}
+        We appreciate any feedback you&apos;d like to share! Please{" "}
+        {FEEDBACK_EMAIL && (
+          <>
+            email{" "}
+            <a href={`mailto:${FEEDBACK_EMAIL}`}>{FEEDBACK_EMAIL}</a> or{" "}
+          </>
+        )}
+        tweet{" "}
         <a href="https://twitter.com/ejuicr" target="_blank" rel="noreferrer">
           @ejuicr
         </a>

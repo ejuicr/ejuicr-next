@@ -154,7 +154,7 @@ export default function Sidebar({
           </>
         ) : view === "loginMenu" ? (
           <>
-            <h2 className="mx-auto my-2 text-[2.25rem]">Login</h2>
+            <h2 className="mx-auto my-[0.5em] text-[2.25rem]">Login</h2>
             <ul className="m-0 list-none p-0">
               {providers.google && (
                 <li className="mb-6">

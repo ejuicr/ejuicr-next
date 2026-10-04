@@ -50,6 +50,44 @@ test.describe("layout and accessibility", () => {
     expect(mainWidth).toBeGreaterThan(700);
   });
 
+  test("matches the legacy section-heading spacing and alignment", async ({
+    page,
+  }) => {
+    await page.goto("/help");
+    const section = page.getByRole("heading", { name: "Contact Support" });
+    const sectionStyles = await section.evaluate((element) => {
+      const cs = getComputedStyle(element);
+      const paragraph = element.closest("main")!.querySelector("p")!;
+      return {
+        marginTop: cs.marginTop,
+        lineHeight: cs.lineHeight,
+        fontWeight: cs.fontWeight,
+        alignedWithParagraph:
+          Math.round(element.getBoundingClientRect().left) ===
+          Math.round(paragraph.getBoundingClientRect().left),
+      };
+    });
+    expect(sectionStyles).toEqual({
+      marginTop: "70px",
+      lineHeight: "normal",
+      fontWeight: "700",
+      alignedWithParagraph: true,
+    });
+
+    await page.goto("/");
+    const calculatorSection = page.getByRole("heading", {
+      name: "Ingredients",
+    });
+    const calculatorStyles = await calculatorSection.evaluate((element) => ({
+      marginTop: getComputedStyle(element).marginTop,
+      lineHeight: getComputedStyle(element).lineHeight,
+    }));
+    expect(calculatorStyles).toEqual({
+      marginTop: "36px",
+      lineHeight: "normal",
+    });
+  });
+
   test("keeps the closed sidebar inert and restores focus after Escape", async ({
     page,
   }) => {

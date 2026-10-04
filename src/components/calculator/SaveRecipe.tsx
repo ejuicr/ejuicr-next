@@ -105,7 +105,7 @@ export default function SaveRecipe({
 
   return (
     <div>
-      <h2 className="mt-4 text-[2.25rem]">
+      <h2 className="mt-[1em] text-[2.25rem]">
         {recipe ? "Save Changes" : "Save Recipe"}
       </h2>
       <hr />

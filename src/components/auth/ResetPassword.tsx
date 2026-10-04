@@ -34,7 +34,7 @@ export default function ResetPassword({ onCancel }: { onCancel?: () => void }) {
 
   return (
     <>
-      <h2 className="my-2 text-[2.25rem]">Reset Password</h2>
+      <h2 className="my-[0.5em] text-[2.25rem]">Reset Password</h2>
       {error && <ErrorMessage>{error}</ErrorMessage>}
       {success && <SuccessMessage>{success}</SuccessMessage>}
       {isLoading && <Spinner />}

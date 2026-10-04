@@ -61,7 +61,13 @@
   h2,
   h3,
   h4 {
-    @apply mx-auto w-fit bg-gradient-to-br from-brand-yellow to-brand-pink bg-clip-text font-display leading-none text-transparent;
+    @apply bg-gradient-to-br from-brand-yellow to-brand-pink bg-clip-text font-bold font-display leading-[normal] text-transparent;
+  }
+
+  h1,
+  h2,
+  h3 {
+    @apply mx-auto w-fit;
   }
 
   h1 {
@@ -76,8 +82,12 @@
     @apply text-[2.25rem];
   }
 
-  h4 {
-    @apply mt-10 text-[1.75rem];
+  /* Legacy h4 sections are left-aligned with a 2.5em top margin; the
+     section-heading class applies the same metrics to semantic h2s. */
+  h4,
+  .section-heading {
+    @apply w-fit text-[1.75rem];
+    margin: 2.5em 0 0;
   }
 
   h5 {
@@ -266,6 +276,10 @@
 
   .row > div {
     width: fit-content;
+  }
+
+  .row > div > p {
+    @apply m-0;
   }
 
   .row > div > span {

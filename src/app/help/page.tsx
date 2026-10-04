@@ -7,7 +7,7 @@ export default function HelpPage() {
     <>
       <h1>Help</h1>
       <hr />
-      <h2 className="mt-10 text-[1.75rem]">Contact Support</h2>
+      <h2 className="section-heading">Contact Support</h2>
       <hr />
       {SUPPORT_EMAIL && (
         <p>
@@ -25,7 +25,7 @@ export default function HelpPage() {
         </a>{" "}
         but you may have to wait a bit longer for a reply.
       </p>
-      <h2 className="mt-10 text-[1.75rem]">Send Feedback</h2>
+      <h2 className="section-heading">Send Feedback</h2>
       <hr />
       <p>
         We appreciate any feedback you&apos;d like to share! Please{" "}

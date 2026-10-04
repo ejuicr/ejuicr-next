@@ -76,7 +76,7 @@ export default function Ingredients({
 
   return (
     <div>
-      <h2 className="mt-4 text-[2.25rem]">Ingredients</h2>
+      <h2 className="mt-[1em] text-[2.25rem]">Ingredients</h2>
       <hr />
       {error && (
         <>

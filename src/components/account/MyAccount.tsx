@@ -249,7 +249,7 @@ export default function MyAccount() {
 
         {(user.hasTwitterLinked || user.hasGoogleLinked) && (
           <>
-            <h2 className="mt-10 text-[1.75rem]">Linked Accounts</h2>
+            <h2 className="section-heading">Linked Accounts</h2>
             <hr />
             <p>
               These accounts are linked to your ejuicr account so you can sign
@@ -293,7 +293,7 @@ export default function MyAccount() {
 
         {!user.hasPassword && (
           <>
-            <h2 className="mt-10 text-[1.75rem]">Set Password</h2>
+            <h2 className="section-heading">Set Password</h2>
             <hr />
             {(isLoadingChangePassword && <Spinner />) || (
               <form onSubmit={onSubmitSetPassword}>
@@ -335,7 +335,7 @@ export default function MyAccount() {
 
         {user.hasPassword && (
           <>
-            <h2 className="mt-10 text-[1.75rem]">Change Password</h2>
+            <h2 className="section-heading">Change Password</h2>
             <hr />
             {(isLoadingChangePassword && <Spinner />) || (
               <form onSubmit={onSubmitChangePassword}>
@@ -386,7 +386,7 @@ export default function MyAccount() {
           </>
         )}
 
-        <h2 className="mt-10 text-[1.75rem]">Delete Account</h2>
+        <h2 className="section-heading">Delete Account</h2>
         <hr />
         <p>
           You can permanently delete your ejuicr account and personal data from

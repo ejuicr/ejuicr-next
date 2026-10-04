@@ -67,7 +67,7 @@ export default function Login({
 
   return (
     <>
-      {!hideHeading && <h2 className="my-2 text-[2.25rem]">Login</h2>}
+      {!hideHeading && <h2 className="my-[0.5em] text-[2.25rem]">Login</h2>}
       {error && <ErrorMessage>{error}</ErrorMessage>}
       {isLoading ? (
         <Spinner />

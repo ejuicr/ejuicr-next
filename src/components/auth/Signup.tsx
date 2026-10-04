@@ -59,7 +59,7 @@ export default function Signup({ onCancel, onLogin, onSuccess }: SignupProps) {
 
   return (
     <>
-      <h2 className="my-2 text-[2.25rem]">Signup</h2>
+      <h2 className="my-[0.5em] text-[2.25rem]">Signup</h2>
       {error && <ErrorMessage>{error}</ErrorMessage>}
       {isLoading ? (
         <Spinner />

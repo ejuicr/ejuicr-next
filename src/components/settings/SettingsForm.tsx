@@ -215,7 +215,7 @@ export default function SettingsForm() {
         <Spinner />
       ) : (
         <>
-          <h2 className="mt-10 text-[1.75rem]">Appearance</h2>
+          <h2 className="section-heading">Appearance</h2>
           <hr />
           <FormRow label={<label htmlFor="mixing-units">Mixing units:</label>}>
             <select
@@ -232,7 +232,7 @@ export default function SettingsForm() {
             </select>
           </FormRow>
           <hr />
-          <h2 className="mt-10 text-[1.75rem]">Target Ejuice</h2>
+          <h2 className="section-heading">Target Ejuice</h2>
           <hr />
           <FormRow label="Default base:">
             <span className="label-left">PG/VG</span>
@@ -314,7 +314,7 @@ export default function SettingsForm() {
             />
           </FormRow>
           <hr />
-          <h2 className="mt-10 text-[1.75rem]">Nicotine</h2>
+          <h2 className="section-heading">Nicotine</h2>
           <hr />
           <FormRow
             label={
@@ -399,7 +399,7 @@ export default function SettingsForm() {
             />
           </FormRow>
           <hr />
-          <h2 className="mt-10 text-[1.75rem]">Flavors</h2>
+          <h2 className="section-heading">Flavors</h2>
           <hr />
           <FormRow label="Default base:">
             <span className="label-left">PG/VG</span>

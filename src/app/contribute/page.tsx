@@ -7,7 +7,7 @@ export default function ContributePage() {
     <>
       <h1>Contribute</h1>
       <hr />
-      <h2 className="mt-10 text-[1.75rem]">Send Feedback</h2>
+      <h2 className="section-heading">Send Feedback</h2>
       <hr />
       <p>
         The easiest way to contribute is to send us your feedback by{" "}
@@ -41,7 +41,7 @@ export default function ContributePage() {
         <li>Does ejuicr fail on any devices you&apos;ve tried?</li>
         <li>How likely are you to recommend ejuicr to a friend?</li>
       </ul>
-      <h2 className="mt-10 text-[1.75rem]">Github</h2>
+      <h2 className="section-heading">Github</h2>
       <hr />
       <p>
         The source code for ejuicr is available on{" "}
@@ -73,7 +73,7 @@ export default function ContributePage() {
       </p>
       {DONATION_LINK && (
         <>
-          <h2 className="mt-10 text-[1.75rem]">Donate</h2>
+          <h2 className="section-heading">Donate</h2>
           <hr />
           <p>
             If you&apos;d like to throw a couple bucks our way to help with

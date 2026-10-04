@@ -11,7 +11,7 @@ export default function AboutPage() {
         The goal of ejuicr is to a vaper&apos;s fist choice for a convenient and
         easy-to-use ejuice calculator.
       </p>
-      <h2 className="mt-10 text-[1.75rem]">Use it Anywhere</h2>
+      <h2 className="section-heading">Use it Anywhere</h2>
       <hr />
       <p>If it can load a web page, it can run ejuicr.</p>
       <p>
@@ -24,7 +24,7 @@ export default function AboutPage() {
         Install the web app to your desktop or home screen so you can even use
         ejuicr offline! <strong>(coming soon...)</strong>
       </p>
-      <h2 className="mt-10 text-[1.75rem]">Little to No Setup Time</h2>
+      <h2 className="section-heading">Little to No Setup Time</h2>
       <hr />
       <p>
         The faster you can start mixing, the better. So we try to remove as many
@@ -34,7 +34,7 @@ export default function AboutPage() {
         If you sign in, you can save your defaults (nicotine strength, PG/VG
         ratio, etc) to make mixing your ejuice even faster.
       </p>
-      <h2 className="mt-10 text-[1.75rem]">No Ads or Trackers - Ever</h2>
+      <h2 className="section-heading">No Ads or Trackers - Ever</h2>
       <hr />
       <p>ejuicr is a labour of love.</p>
       <p>We don&apos;t want your money or your data.</p>
@@ -42,7 +42,7 @@ export default function AboutPage() {
         If there&apos;s anything we want from you, it&apos;s your{" "}
         <Link href="/contribute">feedback</Link>.
       </p>
-      <h2 className="mt-10 text-[1.75rem]">No Unnecessary Emails - Ever.</h2>
+      <h2 className="section-heading">No Unnecessary Emails - Ever.</h2>
       <hr />
       <p>
         We <em>hate</em> spam.

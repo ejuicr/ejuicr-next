@@ -31,6 +31,24 @@ the UI and the REST API. MongoDB via Mongoose; sessions are JWTs in an
 - Theming lives in `src/app/globals.css` (`@theme` tokens from the old
   Dracula-inspired palette). The app is dark-only.
 
+## Deployment
+
+- Production: `https://ejuicr.vercel.app` on Vercel Hobby (non-commercial
+  plan). The repo is `ejuicr/ejuicr-next`, branch `master`, auto-deployed by
+  Vercel.
+- MongoDB Atlas free cluster shared across environments by database name:
+  local `ejuicr-development`, production `ejuicr-production`, preview
+  `ejuicr-staging`.
+- OAuth: Google client "ejuicr-next" and an X (Twitter) OAuth 1.0a app.
+  Callbacks are `{APP_URL}/api/auth/{google,twitter}/callback`.
+- Vercel env changes require a redeploy, and `NEXT_PUBLIC_*` values are
+  inlined at build time, so set them before the build or redeploy after.
+- Full runbook, known quirks, and post-change verification steps live in
+  `docs/deployment.md`.
+- `todo.md` is the maintainer's personal notes file; do not read or modify
+  it unless explicitly asked.
+- Never commit `.env.local`; secrets live there and in Vercel env vars.
+
 ## Validation
 
 Run all of these before finishing a change:

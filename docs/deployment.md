@@ -243,14 +243,18 @@ node --env-file=.env.local scripts/inspect-duplicates.mjs \
   --database "ejuicr-restore-check-$STAMP"
 ```
 
-Drop `ejuicr-restore-check-$STAMP` afterwards, either in the Atlas UI or
-without installing `mongosh`:
+Drop `ejuicr-restore-check-$STAMP` afterwards. `readWriteAnyDatabase` can
+drop collections but not databases, so either drop the database in the Atlas
+UI (project owner) or drop its collections without installing `mongosh`:
 
 ```sh
 node --env-file=.env.local --input-type=module -e "
 import mongoose from 'mongoose';
 await mongoose.connect(process.env.MONGODB_URI.replace('/ejuicr-development', '/ejuicr-restore-check-$STAMP'));
-await mongoose.connection.dropDatabase();
+const db = mongoose.connection.db;
+for (const collection of await db.listCollections().toArray()) {
+  await db.dropCollection(collection.name);
+}
 await mongoose.disconnect();
 "
 ```
@@ -261,7 +265,7 @@ below; the table must contain real checks, not planned dates.
 
 | Date | Source archive | Restored database | Result | Verified by |
 | ---- | -------------- | ----------------- | ------ | ----------- |
-| — (no restore check recorded yet) | — | — | — | — |
+| 2026-10-05 | `ejuicr-production-2026-10-05.archive.gz` | `ejuicr-restore-check-2026-10-05` | 4 documents restored, 0 failures; duplicate audit clean (0 duplicate titles, settings, emails, or provider IDs) | Jim |
 
 A full disaster recovery (restoring over `ejuicr-production` with
 `mongorestore --drop`) is destructive and requires the maintainer's explicit

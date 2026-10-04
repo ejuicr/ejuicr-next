@@ -17,15 +17,23 @@ Operational notes for the ejuicr deployment. Last updated: October 2026.
 
 ## Continuous integration
 
-`.github/workflows/ci.yml` runs on pushes to `master` and on pull requests:
-lint, typecheck, the unit/component suite, the database-backed integration
-suite (MongoDB service container, test-only credentials), the production
-build, and the Firefox smoke suite. The job is named `Validation`.
+`.github/workflows/ci.yml` runs on pushes to any branch and on pull requests
+to `master`: lint, typecheck, the unit/component suite, the database-backed
+integration suite (MongoDB service container, test-only credentials), the
+production build, and the Firefox smoke suite. The job is named `Validation`.
 
-**Gating:** Vercel deploys `master` on push regardless of CI. To make this a
-real gate, enable branch protection on `master` and require the `Validation`
-status check before merging. Until that repository setting exists, validation
-still depends on the maintainer running the commands below.
+**Gating:** a repository branch ruleset (`master validation`) blocks branch
+deletion and force pushes and requires the `Validation` status check on
+`master`. The pull-request requirement is deliberately disabled. Rulesets
+enforce required checks on the branch itself, so a commit without a passing
+`Validation` run is rejected by `master`. Without pull requests, the workflow
+is:
+
+1. Push the commit to a branch (for example `ci/<change>`); CI runs there.
+2. Wait for `Validation` to pass.
+3. Push the same commit to `master`, or merge it through a pull request.
+
+Vercel deploys the resulting `master` push.
 
 ## Environment mapping
 

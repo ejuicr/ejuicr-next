@@ -1,10 +1,15 @@
 name: CI
 
 on:
+  # Run on every branch push so a commit can pass Validation before it is
+  # pushed to the protected master branch (see docs/deployment.md).
   push:
-    branches: [master]
   pull_request:
     branches: [master]
+
+concurrency:
+  group: ci-${{ github.event.pull_request.head.sha || github.sha }}
+  cancel-in-progress: true
 
 jobs:
   validate:

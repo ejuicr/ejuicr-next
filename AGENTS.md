@@ -39,20 +39,15 @@ the UI and the REST API. MongoDB via Mongoose; sessions are JWTs in an
 - Production: `https://ejuicr.vercel.app` on Vercel Hobby (non-commercial
   plan). The repo is `ejuicr/ejuicr-next`, branch `master`, auto-deployed by
   Vercel.
-- MongoDB Atlas free cluster shared across environments by database name:
-  local `ejuicr-development`, production `ejuicr-production`, preview
-  `ejuicr-staging`.
-- OAuth: Google client "ejuicr-next" and an X (Twitter) OAuth 1.0a app.
-  Callbacks are `{APP_URL}/api/auth/{google,twitter}/callback`.
-- Vercel env changes require a redeploy, and `NEXT_PUBLIC_*` values are
-  inlined at build time, so set them before the build or redeploy after.
-- Full runbook, known quirks, and post-change verification steps live in
-  `docs/deployment.md`.
+- For deployment, environment, or OAuth configuration changes, read the
+  relevant sections of `docs/deployment.md` for environment mapping, setup,
+  known quirks, and post-change verification.
 - Never commit `.env.local`; secrets live there and in Vercel env vars.
 
 ## Validation
 
-Run all of these before finishing a change:
+For application code, dependencies, or runtime/build configuration changes,
+run all of these before finishing:
 
 ```
 npm run lint
@@ -61,10 +56,15 @@ npm test
 npm run build
 ```
 
-For UI changes, also run the browser smoke suite against a production build
-(install Chromium once with `npm run test:e2e:install`):
+For UI changes, also run the browser smoke suite using the successful production
+build above. Rebuild only if subsequent changes affect the build. Install
+Firefox once with `npm run test:e2e:install`:
 
 ```
-npm run build
 npm run test:e2e
 ```
+
+For documentation-only or agent-guidance changes, inspect the diff and verify
+referenced paths and commands; the application suite is not required. Validate
+executable examples or configuration when those are affected. Repeat checks
+only when subsequent changes or unresolved failures justify it.

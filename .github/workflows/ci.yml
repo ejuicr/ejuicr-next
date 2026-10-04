@@ -1,0 +1,54 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  validate:
+    name: Validation
+    runs-on: ubuntu-latest
+    services:
+      mongodb:
+        image: mongo:7
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --quiet --eval 'db.runCommand({ ping: 1 })'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      # Test-only configuration: the suite never needs production secrets or
+      # a production database. The integration tests create and drop a
+      # temporary database on the service container.
+      MONGODB_TEST_URI: mongodb://127.0.0.1:27017
+      MONGODB_URI: mongodb://127.0.0.1:27017/ejuicr_ci
+      JWT_SECRET: ci-only-jwt-secret
+      # CI uses the service container, so skip the mongodb-memory-server
+      # binary download during npm ci.
+      MONGOMS_DISABLE_POSTINSTALL: "1"
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Lint
+        run: npm run lint
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Unit and component tests
+        run: npm test
+      - name: Database-backed integration tests
+        run: npm run test:integration
+      - name: Production build
+        run: npm run build
+      - name: Install Firefox for the smoke suite
+        run: npx playwright install --with-deps firefox
+      - name: Browser smoke tests
+        run: npm run test:e2e

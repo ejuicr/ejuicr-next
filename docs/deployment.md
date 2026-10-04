@@ -15,6 +15,18 @@ Operational notes for the ejuicr deployment. Last updated: October 2026.
 - Preview deployments use rotating URLs, so OAuth cannot complete there.
   Test auth on production.
 
+## Continuous integration
+
+`.github/workflows/ci.yml` runs on pushes to `master` and on pull requests:
+lint, typecheck, the unit/component suite, the database-backed integration
+suite (MongoDB service container, test-only credentials), the production
+build, and the Firefox smoke suite. The job is named `Validation`.
+
+**Gating:** Vercel deploys `master` on push regardless of CI. To make this a
+real gate, enable branch protection on `master` and require the `Validation`
+status check before merging. Until that repository setting exists, validation
+still depends on the maintainer running the commands below.
+
 ## Environment mapping
 
 | Environment       | Database             | `APP_URL`                     |

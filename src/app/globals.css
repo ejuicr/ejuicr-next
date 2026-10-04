@@ -1,0 +1,317 @@
+@import "tailwindcss";
+
+/*
+ * Design tokens ported from the original styled-components theme
+ * (`src/styles/themes.js` + `src/constants.js`). The app is dark-only; the
+ * light theme was never implemented in the old front end.
+ */
+@theme {
+  --color-ink: #15171b; /* black */
+  --color-surface: #21222c; /* grayDark */
+  --color-muted: #414558; /* gray */
+  --color-cream: #f8f8f2; /* white */
+  --color-slateblue: #6272a4; /* blue */
+  --color-brand-cyan: #8be9fd;
+  --color-brand-green: #50fa7b;
+  --color-brand-orange: #ffb86c;
+  --color-brand-pink: #ff79c6;
+  --color-brand-purple: #bd93f9;
+  --color-brand-red: #ff5555;
+  --color-brand-yellow: #f1fa8c;
+
+  --font-display: var(--font-bebas-neue), "Bebas Neue", sans-serif;
+}
+
+@layer base {
+  body {
+    margin: 0;
+    padding: 0;
+    @apply bg-surface font-sans text-cream;
+  }
+
+  main {
+    @apply mx-auto max-w-[800px] px-4 pt-4;
+  }
+
+  a:link,
+  a:visited {
+    @apply text-brand-cyan no-underline;
+  }
+
+  a:active,
+  a:hover {
+    @apply text-brand-pink;
+  }
+
+  hr {
+    margin: 1rem 0;
+    border: none;
+    border-top: 0.125rem dotted var(--color-muted);
+  }
+
+  h2,
+  h3,
+  h4 {
+    @apply mx-auto w-fit bg-gradient-to-br from-brand-yellow to-brand-pink bg-clip-text font-display leading-none text-transparent;
+  }
+
+  h2 {
+    @apply text-[2.75rem];
+  }
+
+  h3 {
+    @apply text-[2.25rem];
+  }
+
+  h4 {
+    @apply mt-10 text-[1.75rem];
+  }
+
+  h5 {
+    @apply m-0 text-base leading-[35px] text-slateblue;
+  }
+
+  p {
+    @apply my-6 leading-normal;
+  }
+
+  ul {
+    @apply m-0 pl-4;
+  }
+
+  ul > li {
+    @apply mb-1.5 leading-snug;
+  }
+
+  ol {
+    @apply m-0 pl-8;
+  }
+
+  ol > li {
+    @apply mb-4 leading-snug;
+  }
+
+  button {
+    @apply cursor-pointer rounded-[2px] border-none px-3 py-2 font-bold text-ink;
+    background: linear-gradient(135deg, #bd93f9, #8be9fd);
+  }
+
+  button:hover {
+    background: linear-gradient(135deg, #ff79c6, #bd93f9);
+  }
+
+  button:active {
+    background: var(--color-brand-pink);
+  }
+
+  button:disabled {
+    @apply cursor-not-allowed opacity-60;
+  }
+
+  input {
+    @apply rounded-[3px] border-none bg-ink text-base text-cream outline-none;
+  }
+
+  input[type="text"],
+  input[type="email"],
+  input[type="password"] {
+    height: 27px;
+    width: calc(100% - 12px);
+    padding: 2px 6px;
+    text-align: left;
+  }
+
+  input[type="number"] {
+    -moz-appearance: textfield;
+    appearance: textfield;
+    width: 33px;
+    height: 29px;
+    padding: 1px;
+    text-align: center;
+  }
+
+  input[type="number"].wide {
+    width: 43px;
+  }
+
+  input[type="number"]::-webkit-outer-spin-button,
+  input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  ::placeholder {
+    @apply text-slateblue;
+  }
+}
+
+@layer components {
+  .btn {
+    @apply inline-block cursor-pointer rounded-[2px] border-none px-3 py-2 font-bold text-ink;
+    background: linear-gradient(135deg, #bd93f9, #8be9fd);
+  }
+
+  .btn:hover {
+    color: var(--color-ink);
+    background: linear-gradient(135deg, #ff79c6, #bd93f9);
+  }
+
+  .btn:active {
+    color: var(--color-ink);
+    background: var(--color-brand-pink);
+  }
+
+  .btn-red {
+    background: var(--color-brand-red);
+  }
+
+  .btn-green {
+    background: var(--color-brand-green);
+  }
+
+  .btn-red:hover,
+  .btn-green:hover {
+    background: linear-gradient(135deg, #ff79c6, #bd93f9);
+  }
+
+  .btn-red:active,
+  .btn-green:active {
+    background: var(--color-brand-pink);
+  }
+
+  .input-border {
+    @apply inline-block rounded-[3px] p-[2px];
+    background: linear-gradient(135deg, #bd93f9, #8be9fd);
+  }
+
+  .input-border:focus-within {
+    background: linear-gradient(135deg, #ff79c6, #bd93f9);
+  }
+
+  .input-border > input {
+    background: var(--color-ink);
+  }
+
+  .config-wrapper {
+    @apply mx-2 mt-4 rounded-[3px] bg-ink;
+  }
+
+  .config-wrapper input {
+    background: var(--color-surface);
+  }
+
+  .config-wrapper .row {
+    @apply px-8 py-4;
+  }
+
+  .config-wrapper hr {
+    @apply mx-4;
+  }
+
+  .error-message,
+  .success-message {
+    @apply mb-4 rounded-[3px] bg-brand-red p-4 text-base leading-normal text-ink;
+  }
+
+  .success-message {
+    @apply bg-brand-green;
+  }
+
+  .row {
+    @apply flex justify-between px-2;
+  }
+
+  .row > div {
+    width: fit-content;
+  }
+
+  .row > div > span {
+    line-height: 35px;
+  }
+
+  .label-left {
+    margin: 0 7px 0 0;
+  }
+
+  .label-right {
+    margin: 0 0 0 7px;
+  }
+
+  .label-between {
+    margin: 0 7px;
+  }
+
+  .base-ingredient {
+    padding-left: 42px;
+  }
+}
+
+/* Spinner animations ported from the original Spinner.styled component. */
+.spinner {
+  animation: rotator 1.4s linear infinite;
+}
+
+.spinner-path {
+  stroke-dasharray: 187;
+  stroke-dashoffset: 0;
+  transform-origin: center;
+  animation:
+    spinner-dash 1.4s ease-in-out infinite,
+    spinner-colors 5.6s ease-in-out infinite;
+}
+
+@keyframes rotator {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(270deg);
+  }
+}
+
+@keyframes spinner-colors {
+  0% {
+    stroke: #8be9fd;
+  }
+  25% {
+    stroke: #6272a4;
+  }
+  50% {
+    stroke: #bd93f9;
+  }
+  75% {
+    stroke: #ff79c6;
+  }
+  100% {
+    stroke: #f1fa8c;
+  }
+}
+
+@keyframes spinner-dash {
+  0% {
+    stroke-dashoffset: 187;
+    transform: rotate(0);
+  }
+  50% {
+    stroke-dashoffset: 47;
+    transform: rotate(135deg);
+  }
+  100% {
+    stroke-dashoffset: 187;
+    transform: rotate(450deg);
+  }
+}
+
+/* Custom tooltip used by the settings page. */
+.tooltip {
+  @apply max-w-[180px] rounded-[3px] bg-ink px-3 py-2 text-[0.85rem] leading-snug text-cream shadow-lg;
+}
+
+/* Sidebar slide-over */
+.sidebar-panel {
+  transition: transform 200ms ease-in-out;
+}
+
+.sidebar-backdrop {
+  transition: opacity 200ms ease-in-out;
+}

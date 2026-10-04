@@ -1,0 +1,37 @@
+import mongoose from "mongoose";
+
+const MONGODB_URI = process.env.MONGODB_URI;
+
+interface MongooseCache {
+  conn: typeof mongoose | null;
+  promise: Promise<typeof mongoose> | null;
+}
+
+declare global {
+  var _mongooseCache: MongooseCache | undefined;
+}
+
+const cached: MongooseCache =
+  global._mongooseCache ?? (global._mongooseCache = { conn: null, promise: null });
+
+/**
+ * Connect to MongoDB, reusing the connection across hot reloads and route
+ * handler invocations.
+ */
+export async function connectDB(): Promise<typeof mongoose> {
+  if (cached.conn) return cached.conn;
+
+  if (!MONGODB_URI) {
+    throw new Error("MONGODB_URI is not defined. Add it to .env.local.");
+  }
+
+  if (!cached.promise) {
+    cached.promise = mongoose.connect(MONGODB_URI).catch((error) => {
+      cached.promise = null;
+      throw error;
+    });
+  }
+
+  cached.conn = await cached.promise;
+  return cached.conn;
+}

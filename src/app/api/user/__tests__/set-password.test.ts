@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
   connectDB: vi.fn(),
-  findByIdAndUpdate: vi.fn(),
+  findOneAndUpdate: vi.fn(),
   requireUser: vi.fn(),
   setAuthCookie: vi.fn(),
   signToken: vi.fn(() => "signed-token"),
@@ -17,7 +17,7 @@ vi.mock("@/lib/auth", () => ({
   signToken: mocks.signToken,
 }));
 vi.mock("@/lib/models/user", () => ({
-  User: { findByIdAndUpdate: mocks.findByIdAndUpdate },
+  User: { findOneAndUpdate: mocks.findOneAndUpdate },
 }));
 
 import { ApiError } from "@/lib/api";
@@ -46,7 +46,7 @@ describe("POST /api/user/set-password", () => {
     );
 
     expect(response.status).toBe(401);
-    expect(mocks.findByIdAndUpdate).not.toHaveBeenCalled();
+    expect(mocks.findOneAndUpdate).not.toHaveBeenCalled();
   });
 
   it("sets a hashed password, revokes other sessions, and refreshes this cookie", async () => {
@@ -54,10 +54,11 @@ describe("POST /api/user/set-password", () => {
       _id: "user-1",
       email: "oauth@example.com",
       password: undefined,
+      sessionVersion: 3,
     });
-    mocks.findByIdAndUpdate.mockResolvedValue({
+    mocks.findOneAndUpdate.mockResolvedValue({
       _id: "user-1",
-      sessionVersion: 1,
+      sessionVersion: 4,
     });
 
     const response = await POST(
@@ -69,22 +70,53 @@ describe("POST /api/user/set-password", () => {
     expect(response.status).toBe(200);
     expect(body.message).toBe("Your password has been set.");
 
-    const [userId, update] = mocks.findByIdAndUpdate.mock.calls[0] as [
-      string,
+    const [filter, update, options] = mocks.findOneAndUpdate.mock.calls[0] as [
+      Record<string, unknown>,
       { $set: { password: string }; $inc: { sessionVersion: number } },
+      Record<string, unknown>,
     ];
-    expect(userId).toBe("user-1");
+    // The "no password yet" and session-version preconditions are enforced by
+    // the write filter, not only by the earlier read.
+    expect(filter).toEqual({
+      _id: "user-1",
+      sessionVersion: 3,
+      password: { $in: [null, ""] },
+    });
     expect(update.$set.password).not.toBe("brand-new-password");
     expect(await bcrypt.compare("brand-new-password", update.$set.password)).toBe(
       true,
     );
     expect(update.$inc).toEqual({ sessionVersion: 1 });
+    expect(options).toEqual({ returnDocument: "after" });
 
     expect(mocks.signToken).toHaveBeenCalledWith({
       _id: "user-1",
-      sessionVersion: 1,
+      sessionVersion: 4,
     });
     expect(mocks.setAuthCookie).toHaveBeenCalledWith("signed-token");
+  });
+
+  it("does not mint a session when a concurrent request won the race", async () => {
+    mocks.requireUser.mockResolvedValue({
+      _id: "user-1",
+      email: "oauth@example.com",
+      password: undefined,
+      sessionVersion: 0,
+    });
+    // Another request set the password (and bumped the version) after this
+    // request authenticated, so the conditional write matches nothing.
+    mocks.findOneAndUpdate.mockResolvedValue(null);
+
+    const response = await POST(
+      jsonRequest({ password: "brand-new-password" }),
+      undefined,
+    );
+    const body = (await response.json()) as { message: string };
+
+    expect(response.status).toBe(409);
+    expect(body.message).toMatch(/changed while your request was in flight/i);
+    expect(mocks.signToken).not.toHaveBeenCalled();
+    expect(mocks.setAuthCookie).not.toHaveBeenCalled();
   });
 
   it("refuses to overwrite a password that already exists", async () => {
@@ -102,7 +134,7 @@ describe("POST /api/user/set-password", () => {
 
     expect(response.status).toBe(400);
     expect(body.message).toMatch(/already has a password/i);
-    expect(mocks.findByIdAndUpdate).not.toHaveBeenCalled();
+    expect(mocks.findOneAndUpdate).not.toHaveBeenCalled();
   });
 
   it("rejects missing or non-string passwords", async () => {
@@ -117,6 +149,6 @@ describe("POST /api/user/set-password", () => {
       expect(response.status).toBe(400);
     }
 
-    expect(mocks.findByIdAndUpdate).not.toHaveBeenCalled();
+    expect(mocks.findOneAndUpdate).not.toHaveBeenCalled();
   });
 });

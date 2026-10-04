@@ -7,7 +7,7 @@ const mocks = vi.hoisted(() => ({
   requireUser: vi.fn(),
   setAuthCookie: vi.fn(),
   signToken: vi.fn(() => "signed-token"),
-  findByIdAndUpdate: vi.fn(),
+  findOneAndUpdate: vi.fn(),
 }));
 
 vi.mock("@/lib/db", () => ({ connectDB: mocks.connectDB }));
@@ -17,7 +17,7 @@ vi.mock("@/lib/auth", () => ({
   signToken: mocks.signToken,
 }));
 vi.mock("@/lib/models/user", () => ({
-  User: { findByIdAndUpdate: mocks.findByIdAndUpdate },
+  User: { findOneAndUpdate: mocks.findOneAndUpdate },
 }));
 
 import { ApiError } from "@/lib/api";
@@ -46,7 +46,7 @@ describe("POST /api/user/change-password", () => {
     );
 
     expect(response.status).toBe(401);
-    expect(mocks.findByIdAndUpdate).not.toHaveBeenCalled();
+    expect(mocks.findOneAndUpdate).not.toHaveBeenCalled();
   });
 
   it("rejects invalid new passwords before comparing", async () => {
@@ -63,7 +63,7 @@ describe("POST /api/user/change-password", () => {
       expect(response.status).toBe(400);
     }
 
-    expect(mocks.findByIdAndUpdate).not.toHaveBeenCalled();
+    expect(mocks.findOneAndUpdate).not.toHaveBeenCalled();
   });
 
   it("rejects non-string current passwords", async () => {
@@ -81,7 +81,7 @@ describe("POST /api/user/change-password", () => {
 
     expect(response.status).toBe(400);
     expect(body.message).toBe("Incorrect password.");
-    expect(mocks.findByIdAndUpdate).not.toHaveBeenCalled();
+    expect(mocks.findOneAndUpdate).not.toHaveBeenCalled();
   });
 
   it("rejects an incorrect current password", async () => {
@@ -97,7 +97,7 @@ describe("POST /api/user/change-password", () => {
     );
 
     expect(response.status).toBe(400);
-    expect(mocks.findByIdAndUpdate).not.toHaveBeenCalled();
+    expect(mocks.findOneAndUpdate).not.toHaveBeenCalled();
   });
 
   it("stores a hashed password, revokes other sessions, and refreshes this cookie", async () => {
@@ -105,10 +105,11 @@ describe("POST /api/user/change-password", () => {
     mocks.requireUser.mockResolvedValue({
       _id: "user-1",
       password: passwordHash,
+      sessionVersion: 2,
     });
-    mocks.findByIdAndUpdate.mockResolvedValue({
+    mocks.findOneAndUpdate.mockResolvedValue({
       _id: "user-1",
-      sessionVersion: 1,
+      sessionVersion: 3,
     });
 
     const response = await POST(
@@ -118,12 +119,18 @@ describe("POST /api/user/change-password", () => {
 
     expect(response.status).toBe(200);
 
-    const [userId, update, options] = mocks.findByIdAndUpdate.mock.calls[0] as [
-      string,
+    const [filter, update, options] = mocks.findOneAndUpdate.mock.calls[0] as [
+      Record<string, unknown>,
       { $set: { password: string }; $inc: { sessionVersion: number } },
       Record<string, unknown>,
     ];
-    expect(userId).toBe("user-1");
+    // The credential state that authorized the change is part of the write
+    // filter, so a concurrent reset/change cannot be overwritten.
+    expect(filter).toEqual({
+      _id: "user-1",
+      sessionVersion: 2,
+      password: passwordHash,
+    });
     expect(update.$set.password).not.toBe("new-password");
     expect(await bcrypt.compare("new-password", update.$set.password)).toBe(
       true,
@@ -133,8 +140,31 @@ describe("POST /api/user/change-password", () => {
 
     expect(mocks.signToken).toHaveBeenCalledWith({
       _id: "user-1",
-      sessionVersion: 1,
+      sessionVersion: 3,
     });
     expect(mocks.setAuthCookie).toHaveBeenCalledWith("signed-token");
+  });
+
+  it("does not mint a session when the credentials changed mid-request", async () => {
+    const passwordHash = await bcrypt.hash("current-password", 10);
+    mocks.requireUser.mockResolvedValue({
+      _id: "user-1",
+      password: passwordHash,
+      sessionVersion: 2,
+    });
+    // A password reset completed after this request compared the old
+    // password, so the conditional write matches nothing.
+    mocks.findOneAndUpdate.mockResolvedValue(null);
+
+    const response = await POST(
+      jsonRequest({ password: "current-password", newPassword: "new-password" }),
+      undefined,
+    );
+    const body = (await response.json()) as { message: string };
+
+    expect(response.status).toBe(409);
+    expect(body.message).toMatch(/changed while your request was in flight/i);
+    expect(mocks.signToken).not.toHaveBeenCalled();
+    expect(mocks.setAuthCookie).not.toHaveBeenCalled();
   });
 });

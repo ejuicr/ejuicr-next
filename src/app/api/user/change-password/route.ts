@@ -37,8 +37,16 @@ export const POST = apiHandler(async (request) => {
 
   await connectDB();
   const hashedPassword = await hashPassword(newPassword);
-  const updatedUser = await User.findByIdAndUpdate(
-    user._id,
+
+  // The old password hash and the session version are part of the write
+  // filter, so a change authorized against credentials that have since been
+  // reset or changed by another request cannot overwrite the newer password.
+  const updatedUser = await User.findOneAndUpdate(
+    {
+      _id: user._id,
+      sessionVersion: user.sessionVersion ?? 0,
+      password: user.password,
+    },
     {
       $set: { password: hashedPassword },
       $inc: { sessionVersion: 1 },
@@ -46,7 +54,10 @@ export const POST = apiHandler(async (request) => {
     { returnDocument: "after" },
   );
   if (!updatedUser) {
-    throw new ApiError(401, "Not authorized.");
+    throw new ApiError(
+      409,
+      "Your password changed while your request was in flight. Sign in again and retry.",
+    );
   }
 
   // Keep this session signed in while the version bump revokes every other

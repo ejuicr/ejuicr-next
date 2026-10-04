@@ -31,8 +31,17 @@ export const POST = apiHandler(async (request) => {
 
   await connectDB();
   const hashedPassword = await hashPassword(password);
-  const updatedUser = await User.findByIdAndUpdate(
-    user._id,
+
+  // The precondition (no password yet, session version unchanged) is part of
+  // the write filter, so simultaneous set-password requests cannot overwrite
+  // the winning password, and a request racing a reset or password change
+  // cannot overwrite the newer credential.
+  const updatedUser = await User.findOneAndUpdate(
+    {
+      _id: user._id,
+      sessionVersion: user.sessionVersion ?? 0,
+      password: { $in: [null, ""] },
+    },
     {
       $set: { password: hashedPassword },
       $inc: { sessionVersion: 1 },
@@ -40,7 +49,10 @@ export const POST = apiHandler(async (request) => {
     { returnDocument: "after" },
   );
   if (!updatedUser) {
-    throw new ApiError(401, "Not authorized.");
+    throw new ApiError(
+      409,
+      "This account changed while your request was in flight. Sign in again and retry.",
+    );
   }
 
   // Adding a password is a credential change: keep this session and revoke

@@ -136,6 +136,20 @@ test.describe("layout and accessibility", () => {
       .getByRole("button", { name: "Add Flavor" })
       .evaluate((element) => element.getBoundingClientRect().height);
     expect(addFlavorHeight).toBeCloseTo(35, 0);
+
+    // Button contents are vertically centered.
+    const centered = await page
+      .getByRole("button", { name: "Add Flavor" })
+      .evaluate((element) => {
+        const buttonRect = element.getBoundingClientRect();
+        const buttonCenter = buttonRect.top + buttonRect.height / 2;
+        return [...element.children].every((child) => {
+          const rect = child.getBoundingClientRect();
+          return Math.abs(rect.top + rect.height / 2 - buttonCenter) < 1;
+        });
+      });
+    expect(centered).toBe(true);
+
     for (const testId of ["targetPgInput", "flavor1NameInput"]) {
       const wrapperHeight = await page
         .getByTestId(testId)

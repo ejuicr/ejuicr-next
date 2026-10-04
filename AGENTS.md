@@ -61,3 +61,11 @@ npm run typecheck
 npm test
 npm run build
 ```
+
+For UI changes, also run the browser smoke suite against a production build
+(install Chromium once with `npm run test:e2e:install`):
+
+```
+npm run build
+npm run test:e2e
+```

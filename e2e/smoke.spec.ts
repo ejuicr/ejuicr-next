@@ -86,6 +86,12 @@ test.describe("layout and accessibility", () => {
       marginTop: "36px",
       lineHeight: "normal",
     });
+
+    const labelWeight = await page
+      .locator("h5")
+      .first()
+      .evaluate((element) => getComputedStyle(element).fontWeight);
+    expect(labelWeight).toBe("700");
   });
 
   test("centers the header logo and suppresses focus outlines", async ({

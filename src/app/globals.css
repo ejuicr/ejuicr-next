@@ -91,7 +91,7 @@
   }
 
   h5 {
-    @apply m-0 text-base leading-[35px] text-secondary;
+    @apply m-0 text-base font-bold leading-[35px] text-secondary;
   }
 
   p {

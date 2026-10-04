@@ -6,6 +6,10 @@
  *   2. Users with more than one settings document.
  *   3. Informational: mixed-case and case-colliding email addresses, which
  *      matter when normalizing account lookups.
+ *   4. Duplicate non-empty Google provider IDs, which would block a unique
+ *      partial index on `googleId`.
+ *   5. Duplicate non-empty Twitter provider IDs, which would block a unique
+ *      partial index on `twitterId`.
  *
  * Usage (does not write anything):
  *   node --env-file=.env.local scripts/inspect-duplicates.mjs
@@ -109,6 +113,27 @@ try {
     ])
     .toArray();
 
+  const duplicateProviderIds = (field) =>
+    db
+      .collection("users")
+      .aggregate([
+        { $match: { [field]: { $type: "string", $ne: "" } } },
+        {
+          $group: {
+            _id: `$${field}`,
+            count: { $sum: 1 },
+            userIds: { $push: "$_id" },
+            emails: { $push: "$email" },
+          },
+        },
+        { $match: { count: { $gt: 1 } } },
+        { $sort: { count: -1 } },
+      ])
+      .toArray();
+
+  const duplicateGoogleIds = await duplicateProviderIds("googleId");
+  const duplicateTwitterIds = await duplicateProviderIds("twitterId");
+
   console.log(`Database: ${db.databaseName}`);
   console.log("");
 
@@ -138,9 +163,28 @@ try {
   for (const group of emailCaseCollisions) {
     console.log(`  ${group.emails.join(" / ")}`);
   }
+  console.log("");
+
+  console.log(`Duplicate Google provider IDs: ${duplicateGoogleIds.length}`);
+  for (const group of duplicateGoogleIds) {
+    console.log(
+      `  googleId=${group._id} count=${group.count} users=${group.userIds.join(", ")} emails=${group.emails.join(" / ")}`,
+    );
+  }
+  console.log("");
+
+  console.log(`Duplicate Twitter provider IDs: ${duplicateTwitterIds.length}`);
+  for (const group of duplicateTwitterIds) {
+    console.log(
+      `  twitterId=${group._id} count=${group.count} users=${group.userIds.join(", ")} emails=${group.emails.join(" / ")}`,
+    );
+  }
 
   const hasDuplicates =
-    duplicateRecipes.length > 0 || duplicateSettings.length > 0;
+    duplicateRecipes.length > 0 ||
+    duplicateSettings.length > 0 ||
+    duplicateGoogleIds.length > 0 ||
+    duplicateTwitterIds.length > 0;
   process.exit(hasDuplicates ? 2 : 0);
 } catch (error) {
   console.error("Inspection failed:", error);

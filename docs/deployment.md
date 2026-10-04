@@ -160,7 +160,11 @@ Read-only duplicate audit (exit code 2 means duplicates were found):
 node --env-file=.env.local scripts/inspect-duplicates.mjs --database ejuicr-production
 ```
 
-It also accepts `--database ejuicr-staging`.
+It also accepts `--database ejuicr-staging`. The audit covers recipe titles,
+settings documents, and duplicate Google/Twitter provider IDs. Before adding
+unique partial indexes on `googleId`/`twitterId`, it must report zero
+duplicate provider IDs in staging and production; note that unlinked accounts
+store an empty string, so any index must exclude empty and missing values.
 
 ## API compatibility
 

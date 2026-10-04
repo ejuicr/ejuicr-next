@@ -12,6 +12,8 @@ const MESSAGES: Record<string, string> = {
   twitter: "Twitter sign-in failed. Please try again.",
   "twitter-email":
     "Your Twitter account did not share an email address, which is required to sign in. You may need to grant email access to ejuicr in your Twitter settings.",
+  "twitter-conflict":
+    "That email address is already connected to a different Twitter account. Sign in with the linked account or unlink it first.",
 };
 
 export default function AuthErrorNotice() {

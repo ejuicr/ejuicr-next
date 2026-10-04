@@ -58,32 +58,63 @@ export const GET = apiHandler(async (request) => {
 
     await connectDB();
 
-    const user = await User.findOne({
-      $or: [{ twitterId: profile.id }, { email: profile.email }],
-    });
+    // Established links are matched by Twitter's immutable ID first, so a
+    // linked account never resolves through an email that belongs to a
+    // different account.
+    let user = await User.findOne({ twitterId: profile.id });
+    if (!user) {
+      user = await User.findOne({ email: profile.email });
+      // Email-based linking must not silently move a Twitter identity that is
+      // already attached to another account.
+      if (user?.twitterId && user.twitterId !== profile.id) {
+        return NextResponse.redirect(`${appUrl}/?authError=twitter-conflict`);
+      }
+    }
+
+    const profileFields = {
+      authProvider: "twitter",
+      twitterId: profile.id,
+      twitterDisplayName: profile.displayName,
+      twitterHandle: profile.handle,
+      twitterPicture: profile.picture ?? "",
+    };
 
     let userId: string;
     let sessionVersion: number;
     if (!user) {
       const createdUser = await User.create({
-        authProvider: "twitter",
+        ...profileFields,
         email: profile.email,
-        twitterId: profile.id,
-        twitterDisplayName: profile.displayName,
-        twitterHandle: profile.handle,
-        twitterPicture: profile.picture ?? "",
       });
       userId = createdUser._id.toString();
       sessionVersion = createdUser.sessionVersion ?? 0;
-    } else {
-      user.authProvider = "twitter";
-      user.twitterId = profile.id;
-      user.twitterDisplayName = profile.displayName;
-      user.twitterHandle = profile.handle;
-      user.twitterPicture = profile.picture ?? "";
+    } else if (user.twitterId === profile.id) {
+      user.set(profileFields);
       await user.save();
       userId = user._id.toString();
       sessionVersion = user.sessionVersion ?? 0;
+    } else {
+      // Claiming an unlinked account by email is atomic: the filter only
+      // matches while no other Twitter identity has been attached, so two
+      // simultaneous links cannot both succeed.
+      const linkedUser = await User.findOneAndUpdate(
+        {
+          _id: user._id,
+          $or: [
+            { twitterId: { $exists: false } },
+            { twitterId: null },
+            { twitterId: "" },
+            { twitterId: profile.id },
+          ],
+        },
+        { $set: profileFields },
+        { returnDocument: "after" },
+      );
+      if (!linkedUser) {
+        return NextResponse.redirect(`${appUrl}/?authError=twitter-conflict`);
+      }
+      userId = linkedUser._id.toString();
+      sessionVersion = linkedUser.sessionVersion ?? 0;
     }
 
     await setAuthCookie(signToken({ _id: userId, sessionVersion }));

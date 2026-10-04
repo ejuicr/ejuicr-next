@@ -33,6 +33,9 @@ the UI and the REST API. MongoDB via Mongoose; sessions are JWTs in an
 - Deliberate architecture decisions are recorded as ADRs in
   `docs/DECISIONS.md`; read it before changing auth, data, or calculator
   behavior.
+- When closing review items or amending ADRs, state the intended invariant,
+  the implemented mechanism, the evidence (automated or manual), and any
+  remaining limitation. Do not mark an item resolved on mechanism alone.
 
 ## Deployment
 

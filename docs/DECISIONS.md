@@ -239,3 +239,29 @@ flavor defaults) without replacing active inputs.
 **Consequences:** Saved defaults never silently replace an active draft, and
 displayed instructions always include every active ingredient. A late
 response for a previous account cannot apply to the current one.
+
+## ADR-013 — Database-backed integration tests verify high-risk invariants
+
+**Status:** Accepted · October 2026
+
+**Context:** Unit and component tests asserted mechanisms — mocked database
+updates, cookie calls, and schema declarations — but could not prove
+guarantees such as "an initial password is never overwritten" or "a
+successful deletion removes all owned data". The browser smoke suite covers
+signed-out UI only.
+
+**Decision:** Auth and data invariants are verified by a database-backed
+integration suite (`npm run test:integration`). It exercises the real route
+handlers, models, and database constraints; only the session/cookie layer and
+the Twitter HTTP exchange are mocked. Each test file creates and drops a
+uniquely named temporary database. The suite starts an in-memory MongoDB
+(`mongodb-memory-server`) by default or uses an isolated `MONGODB_TEST_URI`;
+CI supplies a MongoDB service container and test-only credentials. The fast
+unit/component suite stays database-free and runs separately.
+
+**Consequences:** Credential races, duplicate writes, provider-identity
+conflicts, and deletion/write overlap are verified against persisted state,
+not just call patterns. The suite needs a MongoDB binary or service and takes
+seconds rather than milliseconds, so it stays out of the default `npm test`
+run. The browser smoke suite still does not cover authenticated flows;
+integration tests are the evidence layer for them.

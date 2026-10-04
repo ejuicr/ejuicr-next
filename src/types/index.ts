@@ -93,23 +93,34 @@ export interface NicResults {
   weight: number;
 }
 
-export interface FlavorState {
+/** Flavor inputs as entered by the user (no derived values). */
+export interface FlavorInput {
   name: string;
   pg: number;
   vg: number;
   percentage: number;
+}
+
+/** Flavor inputs plus derived amounts and weights. */
+export interface FlavorState extends FlavorInput {
   amount: number;
   pgAmount: number;
   vgAmount: number;
   weight: number;
 }
 
-export interface CalculatorValues {
+/** Everything the calculator needs to derive its results. */
+export interface CalculatorInput {
   targetPg: number;
   targetVg: number;
   targetNicStrength: number;
   targetAmount: number;
   nicConfig: NicConfig;
+  flavors: FlavorInput[];
+}
+
+/** Values derived from `CalculatorInput`; never persisted. */
+export interface CalculatorResults {
   nicResults: NicResults;
   flavors: FlavorState[];
   pgRequired: number;

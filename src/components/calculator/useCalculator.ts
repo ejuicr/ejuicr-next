@@ -2,97 +2,36 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "@/components/providers/AuthProvider";
+import {
+  calculateResults,
+  createDefaultFlavors,
+  flavorInputsFromRecipe,
+  parseCalculatorDraft,
+  serializeCalculatorDraft,
+} from "@/lib/calculator";
 import { api } from "@/lib/client-api";
 import {
-  calculateWeight,
   parseNumberInput,
   roundToTwoDecimalPlaces,
-  totalFlavorPg,
-  totalFlavorVg,
   validatePgVgValue,
 } from "@/lib/helpers";
-import type {
-  CalculatorValues,
-  FlavorState,
-  NicConfig,
-  NicResults,
-  Recipe,
-  SettingsData,
-} from "@/types";
+import type { FlavorInput, NicConfig, Recipe, SettingsData } from "@/types";
 
 export const CALCULATOR_STORAGE_KEY = "calculator";
 
-const EMPTY_NIC_RESULTS: NicResults = {
-  amount: 0,
-  percentage: 0,
-  pg: 0,
-  vg: 0,
-  weight: 0,
-};
-
-function createDefaultFlavors(): FlavorState[] {
-  return [
-    {
-      name: "Flavor 1",
-      pg: 100,
-      vg: 0,
-      percentage: 5,
-      amount: 1.5,
-      pgAmount: 1.5,
-      vgAmount: 0,
-      weight: 1.55,
-    },
-  ];
-}
-
-interface FlavorInput {
-  name: string;
-  pg: number;
-  vg: number;
-  percentage: number;
-}
-
-/** Compute amounts and weights for a list of flavors at a given target volume. */
-function buildFlavors(
-  inputs: FlavorInput[],
-  targetAmount: number,
-): FlavorState[] {
-  return inputs.map((flavor) => {
-    // Keep full precision internally; display formatting rounds later.
-    const amount = (flavor.percentage / 100) * targetAmount;
-    const pgAmount = (flavor.pg / 100) * amount;
-    const vgAmount = (flavor.vg / 100) * amount;
-    const weight = calculateWeight(amount, flavor.pg, flavor.vg);
-    return { ...flavor, amount, pgAmount, vgAmount, weight };
-  });
-}
-
-function flavorsFromRecipe(recipe: Recipe): FlavorState[] {
-  return buildFlavors(
-    recipe.ingredients.flavors.map((flavor) => ({
-      name: flavor.name,
-      pg: flavor.base.pg,
-      vg: flavor.base.vg,
-      percentage: flavor.percentage,
-    })),
-    recipe.amount,
-  );
-}
-
 /** The settings endpoint returns `{}` until the user has saved defaults. */
 function hasSettings(value: unknown): value is SettingsData {
-  return (
-    typeof value === "object" && value !== null && "base" in value
-  );
+  return typeof value === "object" && value !== null && "base" in value;
 }
 
 /**
  * Calculator state and handlers.
  *
- * When a `recipe` is passed the calculator initialises from it. Callers must
- * remount the calculator when switching recipes (see `key` usage in
- * `RecipeLoader`); this keeps the initialisation simple and avoids state
- * syncing effects.
+ * Only inputs live in state; nicotine, flavor, and carrier results are pure
+ * derivations via `calculateResults`. When a `recipe` is passed the calculator
+ * initialises from it. Callers must remount the calculator when switching
+ * recipes (see `key` usage in `RecipeLoader`); this keeps the initialisation
+ * simple and avoids state syncing effects.
  */
 export function useCalculator(recipe?: Recipe) {
   const { user } = useAuth();
@@ -118,8 +57,8 @@ export function useCalculator(recipe?: Recipe) {
         }
       : { strength: 100, pg: 100, vg: 0 },
   );
-  const [flavors, setFlavors] = useState<FlavorState[]>(() =>
-    recipe ? flavorsFromRecipe(recipe) : createDefaultFlavors(),
+  const [flavors, setFlavors] = useState<FlavorInput[]>(() =>
+    recipe ? flavorInputsFromRecipe(recipe) : createDefaultFlavors(),
   );
   // A recipe with zero strength is a zero-nicotine recipe; otherwise the
   // calculator starts with nicotine visible until settings say otherwise.
@@ -134,27 +73,42 @@ export function useCalculator(recipe?: Recipe) {
   const hasDraftRef = useRef(false);
   const savedSettingsRef = useRef<SettingsData | null>(null);
 
-  // Restore persisted calculator values on first mount. This has to run after
-  // mount so the server-rendered defaults keep matching the first client
-  // render (localStorage is not available during SSR).
+  const { nicResults, flavors: flavorResults, pgRequired, vgRequired } =
+    useMemo(
+      () =>
+        calculateResults({
+          targetPg,
+          targetVg,
+          targetNicStrength,
+          targetAmount,
+          nicConfig,
+          flavors,
+        }),
+      [targetPg, targetVg, targetNicStrength, targetAmount, nicConfig, flavors],
+    );
+
+  // Restore persisted inputs on first mount. This has to run after mount so
+  // the server-rendered defaults keep matching the first client render
+  // (localStorage is not available during SSR). Stored data is validated and
+  // only inputs are applied; results are recalculated from them.
   /* eslint-disable react-hooks/set-state-in-effect -- one-time hydration from localStorage */
   useEffect(() => {
     if (recipe) return;
     try {
       const raw = localStorage.getItem(CALCULATOR_STORAGE_KEY);
       if (!raw) return;
-      const saved = JSON.parse(raw) as Partial<CalculatorValues> | null;
-      if (!saved || typeof saved !== "object") return;
+      const draft = parseCalculatorDraft(JSON.parse(raw));
+      if (!draft) return;
       // Any stored state is an existing draft and outranks user defaults.
       hasDraftRef.current = true;
-      if (typeof saved.targetPg === "number") setTargetPg(saved.targetPg);
-      if (typeof saved.targetVg === "number") setTargetVg(saved.targetVg);
-      if (typeof saved.targetNicStrength === "number")
-        setTargetNicStrength(saved.targetNicStrength);
-      if (typeof saved.targetAmount === "number")
-        setTargetAmount(saved.targetAmount);
-      if (saved.nicConfig) setNicConfig(saved.nicConfig);
-      if (Array.isArray(saved.flavors)) setFlavors(saved.flavors);
+      if (draft.targetPg !== undefined) setTargetPg(draft.targetPg);
+      if (draft.targetVg !== undefined) setTargetVg(draft.targetVg);
+      if (draft.targetNicStrength !== undefined)
+        setTargetNicStrength(draft.targetNicStrength);
+      if (draft.targetAmount !== undefined)
+        setTargetAmount(draft.targetAmount);
+      if (draft.nicConfig) setNicConfig(draft.nicConfig);
+      if (draft.flavors !== undefined) setFlavors(draft.flavors);
     } catch (error) {
       console.error("Failed to restore calculator values.", error);
     }
@@ -176,19 +130,14 @@ export function useCalculator(recipe?: Recipe) {
       pg: settings.nicotine.base.pg,
       vg: settings.nicotine.base.vg,
     });
-    setFlavors(
-      buildFlavors(
-        [
-          {
-            name: "Flavor 1",
-            pg: settings.flavor.base.pg,
-            vg: settings.flavor.base.vg,
-            percentage: settings.flavor.percentage,
-          },
-        ],
-        settings.amount,
-      ),
-    );
+    setFlavors([
+      {
+        name: "Flavor 1",
+        pg: settings.flavor.base.pg,
+        vg: settings.flavor.base.vg,
+        percentage: settings.flavor.percentage,
+      },
+    ]);
   }, []);
 
   // Load the signed-in user's saved settings.
@@ -231,56 +180,26 @@ export function useCalculator(recipe?: Recipe) {
     };
   }, [user, recipe, applySettings]);
 
-  // Nicotine results are derived from the target values and nicotine base.
-  // Full precision is kept internally; display formatting rounds later.
-  const nicResults = useMemo<NicResults>(() => {
-    if (
-      nicConfig.strength <= 0 ||
-      nicConfig.strength < targetNicStrength ||
-      targetAmount <= 0
-    ) {
-      return EMPTY_NIC_RESULTS;
-    }
-    const amount = (targetNicStrength * targetAmount) / nicConfig.strength;
-    const percentage = (amount / targetAmount) * 100;
-    const pg = (nicConfig.pg / 100) * amount;
-    const vg = (nicConfig.vg / 100) * amount;
-    const weight = calculateWeight(amount, nicConfig.pg, nicConfig.vg);
-    return { amount, percentage, pg, vg, weight };
-  }, [nicConfig, targetNicStrength, targetAmount]);
-
-  // The PG/VG that must be added to reach the target ratio.
-  const pgRequired = useMemo(
-    () =>
-      (targetPg / 100) * targetAmount -
-      nicResults.pg -
-      totalFlavorPg(flavors),
-    [targetPg, targetAmount, nicResults.pg, flavors],
-  );
-
-  const vgRequired = useMemo(
-    () =>
-      (targetVg / 100) * targetAmount -
-      nicResults.vg -
-      totalFlavorVg(flavors),
-    [targetVg, targetAmount, nicResults.vg, flavors],
-  );
-
-  // Persist calculator values between visits.
+  // Persist inputs only; results are always recalculated on load.
   useEffect(() => {
     if (recipe) return;
-    const values: CalculatorValues = {
-      targetPg,
-      targetVg,
-      targetNicStrength,
-      targetAmount,
-      nicConfig,
-      nicResults,
-      flavors,
-      pgRequired,
-      vgRequired,
-    };
-    localStorage.setItem(CALCULATOR_STORAGE_KEY, JSON.stringify(values));
+    try {
+      localStorage.setItem(
+        CALCULATOR_STORAGE_KEY,
+        serializeCalculatorDraft({
+          targetPg,
+          targetVg,
+          targetNicStrength,
+          targetAmount,
+          nicConfig,
+          flavors,
+        }),
+      );
+    } catch (error) {
+      // Private browsing or a full quota can make storage unavailable; the
+      // calculator still works, it just cannot persist.
+      console.warn("Failed to save calculator values.", error);
+    }
   }, [
     recipe,
     targetPg,
@@ -288,10 +207,7 @@ export function useCalculator(recipe?: Recipe) {
     targetNicStrength,
     targetAmount,
     nicConfig,
-    nicResults,
     flavors,
-    pgRequired,
-    vgRequired,
   ]);
 
   const handleChangeTargetPgVg = useCallback(
@@ -314,9 +230,7 @@ export function useCalculator(recipe?: Recipe) {
 
   const handleChangeTargetAmount = useCallback((value: string | number) => {
     hasDraftRef.current = true;
-    const roundedValue = roundToTwoDecimalPlaces(parseNumberInput(value));
-    setTargetAmount(roundedValue);
-    setFlavors((current) => buildFlavors(current, roundedValue));
+    setTargetAmount(roundToTwoDecimalPlaces(parseNumberInput(value)));
   }, []);
 
   const handleChangeNicConfigPgVg = useCallback(
@@ -358,17 +272,14 @@ export function useCalculator(recipe?: Recipe) {
       hasDraftRef.current = true;
       const roundedValue = roundToTwoDecimalPlaces(parseNumberInput(value));
       setFlavors((current) =>
-        buildFlavors(
-          current.map((flavor, flavorIndex) =>
-            flavorIndex === index
-              ? { ...flavor, percentage: roundedValue }
-              : flavor,
-          ),
-          targetAmount,
+        current.map((flavor, flavorIndex) =>
+          flavorIndex === index
+            ? { ...flavor, percentage: roundedValue }
+            : flavor,
         ),
       );
     },
-    [targetAmount],
+    [],
   );
 
   const handleChangeFlavorPgVg = useCallback(
@@ -376,21 +287,20 @@ export function useCalculator(recipe?: Recipe) {
       hasDraftRef.current = true;
       const validatedValue = validatePgVgValue(value);
       setFlavors((current) =>
-        buildFlavors(
-          current.map((flavor, flavorIndex) =>
-            flavorIndex === index
-              ? {
-                  ...flavor,
-                  pg: ingredient === "vg" ? 100 - validatedValue : validatedValue,
-                  vg: ingredient === "vg" ? validatedValue : 100 - validatedValue,
-                }
-              : flavor,
-          ),
-          targetAmount,
+        current.map((flavor, flavorIndex) =>
+          flavorIndex === index
+            ? {
+                ...flavor,
+                pg:
+                  ingredient === "vg" ? 100 - validatedValue : validatedValue,
+                vg:
+                  ingredient === "vg" ? validatedValue : 100 - validatedValue,
+              }
+            : flavor,
         ),
       );
     },
-    [targetAmount],
+    [],
   );
 
   const handleRemoveFlavor = useCallback((index: number) => {
@@ -412,9 +322,9 @@ export function useCalculator(recipe?: Recipe) {
         vg: defaults?.base.vg ?? 0,
         percentage: defaults?.percentage ?? 0,
       };
-      return [...current, buildFlavors([flavor], targetAmount)[0]];
+      return [...current, flavor];
     });
-  }, [targetAmount]);
+  }, []);
 
   // Never hide nicotine that is active in the current calculation, for
   // example a saved recipe opened while zero-nicotine defaults are enabled.
@@ -435,7 +345,7 @@ export function useCalculator(recipe?: Recipe) {
     targetAmount,
     nicConfig,
     nicResults,
-    flavors,
+    flavors: flavorResults,
     pgRequired,
     vgRequired,
     showNicotine,

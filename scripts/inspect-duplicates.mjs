@@ -9,13 +9,34 @@
  *
  * Usage (does not write anything):
  *   node --env-file=.env.local scripts/inspect-duplicates.mjs
+ *   node --env-file=.env.local scripts/inspect-duplicates.mjs --database ejuicr-production
  *
  * Exits 0 when no duplicates are found, 2 when duplicates exist, 1 on error.
  */
 import mongoose from "mongoose";
 import process from "node:process";
 
-const uri = process.env.MONGODB_URI;
+/** Point the same cluster connection at another database. */
+function withDatabase(uri, database) {
+  if (/(mongodb(?:\+srv)?:\/\/[^/]+\/)[^?]*/.test(uri)) {
+    return uri.replace(/(mongodb(?:\+srv)?:\/\/[^/]+\/)[^?]*/, `$1${database}`);
+  }
+  return uri.replace(
+    /(mongodb(?:\+srv)?:\/\/[^/?]+)(?=\?|$)/,
+    `$1/${database}`,
+  );
+}
+
+const databaseIndex = process.argv.indexOf("--database");
+const databaseOverride =
+  databaseIndex !== -1 ? process.argv[databaseIndex + 1] : undefined;
+
+const baseUri = process.env.MONGODB_URI;
+const uri = baseUri
+  ? databaseOverride
+    ? withDatabase(baseUri, databaseOverride)
+    : baseUri
+  : undefined;
 
 if (!uri) {
   console.error(

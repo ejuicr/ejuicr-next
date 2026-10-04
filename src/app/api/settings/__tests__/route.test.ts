@@ -4,8 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const mocks = vi.hoisted(() => ({
   connectDB: vi.fn(),
   requireUser: vi.fn(),
-  findOne: vi.fn(),
-  create: vi.fn(),
+  exists: vi.fn(),
   findOneAndUpdate: vi.fn(),
 }));
 
@@ -13,8 +12,7 @@ vi.mock("@/lib/db", () => ({ connectDB: mocks.connectDB }));
 vi.mock("@/lib/auth", () => ({ requireUser: mocks.requireUser }));
 vi.mock("@/lib/models/settings", () => ({
   Settings: {
-    findOne: mocks.findOne,
-    create: mocks.create,
+    exists: mocks.exists,
     findOneAndUpdate: mocks.findOneAndUpdate,
   },
 }));
@@ -44,6 +42,7 @@ describe("POST /api/settings", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.requireUser.mockResolvedValue({ _id: "user-1" });
+    mocks.findOneAndUpdate.mockResolvedValue({ _id: "settings-1" });
   });
 
   it("requires an authenticated session", async () => {
@@ -53,40 +52,14 @@ describe("POST /api/settings", () => {
     const response = await POST(jsonRequest(allowedBody), undefined);
 
     expect(response.status).toBe(401);
-    expect(mocks.findOne).not.toHaveBeenCalled();
-    expect(mocks.create).not.toHaveBeenCalled();
+    expect(mocks.exists).not.toHaveBeenCalled();
+    expect(mocks.findOneAndUpdate).not.toHaveBeenCalled();
   });
 
-  it("creates settings owned by the session user with an allowlisted payload", async () => {
-    mocks.findOne.mockResolvedValue(null);
-    mocks.create.mockImplementation(async (doc: unknown) => doc);
-
+  it("upserts with an allowlisted payload, validators, and insert defaults", async () => {
     const response = await POST(
       jsonRequest({
         ...allowedBody,
-        _id: "injected-id",
-        user: "attacker-id",
-        $set: { user: "attacker-id" },
-      }),
-      undefined,
-    );
-
-    expect(response.status).toBe(200);
-
-    const created = mocks.create.mock.calls[0][0] as Record<string, unknown>;
-    expect(created).toEqual({ ...allowedBody, user: "user-1" });
-    expect(created).not.toHaveProperty("_id");
-    expect(created).not.toHaveProperty("$set");
-  });
-
-  it("updates existing settings with an allowlisted payload and validators", async () => {
-    mocks.findOne.mockResolvedValue({ _id: "settings-1", user: "user-1" });
-    mocks.findOneAndUpdate.mockResolvedValue({ _id: "settings-1" });
-
-    const response = await POST(
-      jsonRequest({
-        ...allowedBody,
-        theme: "light",
         _id: "injected-id",
         user: "attacker-id",
         $set: { user: "attacker-id" },
@@ -99,15 +72,35 @@ describe("POST /api/settings", () => {
     const [filter, update, options] = mocks.findOneAndUpdate.mock
       .calls[0] as [Record<string, unknown>, Record<string, unknown>, Record<string, unknown>];
     expect(filter).toEqual({ user: "user-1" });
-    expect(update).toEqual({ ...allowedBody, theme: "light" });
-    expect(update).not.toHaveProperty("user");
-    expect(update).not.toHaveProperty("_id");
-    expect(update).not.toHaveProperty("$set");
-    expect(options).toEqual({ returnDocument: "after", runValidators: true });
+    expect(update).toEqual({ $set: allowedBody });
+    expect(update.$set).not.toHaveProperty("user");
+    expect(update.$set).not.toHaveProperty("_id");
+    expect(options).toEqual({
+      upsert: true,
+      returnDocument: "after",
+      runValidators: true,
+      setDefaultsOnInsert: true,
+    });
+    // Non-empty payloads never need the existence probe.
+    expect(mocks.exists).not.toHaveBeenCalled();
   });
 
-  it("rejects updates with no editable fields", async () => {
-    mocks.findOne.mockResolvedValue({ _id: "settings-1", user: "user-1" });
+  it("creates defaults for an empty first save", async () => {
+    mocks.exists.mockResolvedValue(null);
+
+    const response = await POST(jsonRequest({}), undefined);
+
+    expect(response.status).toBe(200);
+    expect(mocks.exists).toHaveBeenCalledWith({ user: "user-1" });
+    expect(mocks.findOneAndUpdate).toHaveBeenCalledWith(
+      { user: "user-1" },
+      { $set: {} },
+      expect.objectContaining({ upsert: true, setDefaultsOnInsert: true }),
+    );
+  });
+
+  it("rejects an empty update when settings already exist", async () => {
+    mocks.exists.mockResolvedValue({ _id: "settings-1" });
 
     const response = await POST(
       jsonRequest({ user: "attacker-id", $set: { user: "attacker-id" } }),
@@ -135,8 +128,7 @@ describe("POST /api/settings", () => {
       expect(response.status).toBe(400);
     }
 
-    expect(mocks.findOne).not.toHaveBeenCalled();
+    expect(mocks.exists).not.toHaveBeenCalled();
     expect(mocks.findOneAndUpdate).not.toHaveBeenCalled();
-    expect(mocks.create).not.toHaveBeenCalled();
   });
 });

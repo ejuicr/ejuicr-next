@@ -4,13 +4,18 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const mocks = vi.hoisted(() => ({
   connectDB: vi.fn(),
   requireUser: vi.fn(),
+  findOne: vi.fn(),
+  collation: vi.fn(),
   findOneAndUpdate: vi.fn(),
 }));
 
 vi.mock("@/lib/db", () => ({ connectDB: mocks.connectDB }));
 vi.mock("@/lib/auth", () => ({ requireUser: mocks.requireUser }));
 vi.mock("@/lib/models/recipe", () => ({
-  Recipe: { findOneAndUpdate: mocks.findOneAndUpdate },
+  Recipe: {
+    findOne: mocks.findOne,
+    findOneAndUpdate: mocks.findOneAndUpdate,
+  },
 }));
 
 import { PUT } from "../route";
@@ -42,6 +47,8 @@ describe("PUT /api/recipes/:id", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.requireUser.mockResolvedValue({ _id: "user-1" });
+    mocks.findOne.mockReturnValue({ collation: mocks.collation });
+    mocks.collation.mockResolvedValue(null);
   });
 
   it("requires an authenticated session", async () => {
@@ -86,6 +93,16 @@ describe("PUT /api/recipes/:id", () => {
 
     expect(response.status).toBe(200);
 
+    expect(mocks.findOne).toHaveBeenCalledWith({
+      _id: { $ne: "recipe-1" },
+      author: "user-1",
+      name: "Updated Mix",
+    });
+    expect(mocks.collation).toHaveBeenCalledWith({
+      locale: "en",
+      strength: 2,
+    });
+
     const [filter, update, options] = mocks.findOneAndUpdate.mock
       .calls[0] as [Record<string, unknown>, Record<string, unknown>, Record<string, unknown>];
     expect(filter).toEqual({ _id: "recipe-1", author: "user-1" });
@@ -103,6 +120,15 @@ describe("PUT /api/recipes/:id", () => {
     expect(update).not.toHaveProperty("_id");
     expect(update).not.toHaveProperty("$set");
     expect(options).toEqual({ returnDocument: "after", runValidators: true });
+  });
+
+  it("refuses to rename a recipe to an existing title", async () => {
+    mocks.collation.mockResolvedValue({ _id: "other-recipe" });
+
+    const response = await PUT(jsonRequest(allowedBody), routeContext);
+
+    expect(response.status).toBe(400);
+    expect(mocks.findOneAndUpdate).not.toHaveBeenCalled();
   });
 
   it("returns 404 when the owner-scoped query matches nothing", async () => {

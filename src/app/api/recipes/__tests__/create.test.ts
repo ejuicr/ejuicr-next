@@ -5,6 +5,7 @@ const mocks = vi.hoisted(() => ({
   connectDB: vi.fn(),
   requireUser: vi.fn(),
   findOne: vi.fn(),
+  collation: vi.fn(),
   create: vi.fn(),
 }));
 
@@ -39,7 +40,8 @@ describe("POST /api/recipes", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.requireUser.mockResolvedValue({ _id: "user-1" });
-    mocks.findOne.mockResolvedValue(null);
+    mocks.findOne.mockReturnValue({ collation: mocks.collation });
+    mocks.collation.mockResolvedValue(null);
     mocks.create.mockImplementation(async (doc: unknown) => doc);
   });
 
@@ -58,6 +60,10 @@ describe("POST /api/recipes", () => {
     expect(mocks.findOne).toHaveBeenCalledWith({
       author: "user-1",
       name: "New Mix",
+    });
+    expect(mocks.collation).toHaveBeenCalledWith({
+      locale: "en",
+      strength: 2,
     });
 
     const created = mocks.create.mock.calls[0][0] as Record<string, unknown>;
@@ -91,12 +97,16 @@ describe("POST /api/recipes", () => {
     expect(mocks.create).not.toHaveBeenCalled();
   });
 
-  it("refuses duplicate titles for the same user", async () => {
-    mocks.findOne.mockResolvedValue({ _id: "existing" });
+  it("refuses duplicate titles for the same user, ignoring case", async () => {
+    mocks.collation.mockResolvedValue({ _id: "existing" });
 
     const response = await POST(jsonRequest(allowedBody), undefined);
 
     expect(response.status).toBe(400);
+    expect(mocks.collation).toHaveBeenCalledWith({
+      locale: "en",
+      strength: 2,
+    });
     expect(mocks.create).not.toHaveBeenCalled();
   });
 });

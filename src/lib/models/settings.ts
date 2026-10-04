@@ -120,6 +120,9 @@ export type Settings = InferSchemaType<typeof settingsSchema> & {
   updatedAt: Date;
 };
 
+// One settings document per user; the API upserts against this guarantee.
+settingsSchema.index({ user: 1 }, { unique: true });
+
 export const Settings: Model<Settings> =
   (models.Settings as Model<Settings> | undefined) ??
   model<Settings>("Settings", settingsSchema);

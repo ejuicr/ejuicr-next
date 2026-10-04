@@ -84,6 +84,17 @@ export type Recipe = InferSchemaType<typeof recipeSchema> & {
   updatedAt: Date;
 };
 
+// A user may not have two recipes with the same title, ignoring case. The
+// collation matches the normalized duplicate checks in the API routes.
+recipeSchema.index(
+  { author: 1, name: 1 },
+  {
+    unique: true,
+    collation: { locale: "en", strength: 2 },
+    name: "author_title_unique",
+  },
+);
+
 export const Recipe: Model<Recipe> =
   (models.Recipe as Model<Recipe> | undefined) ??
   model<Recipe>("Recipe", recipeSchema);

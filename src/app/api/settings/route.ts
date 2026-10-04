@@ -27,23 +27,26 @@ export const POST = apiHandler(async (request) => {
 
   await connectDB();
 
-  const existing = await Settings.findOne({ user: user._id });
-  if (!existing) {
-    const newSettings = await Settings.create({
-      ...settingsInput,
-      user: user._id,
-    });
-    return NextResponse.json(newSettings);
-  }
-
+  // An empty body may create defaults on the first save, but must not be
+  // accepted as an "update" when settings already exist.
   if (Object.keys(settingsInput).length === 0) {
-    throw new ApiError(400, "No valid settings fields to update.");
+    const existing = await Settings.exists({ user: user._id });
+    if (existing) {
+      throw new ApiError(400, "No valid settings fields to update.");
+    }
   }
 
-  const updatedSettings = await Settings.findOneAndUpdate(
+  // Atomic upsert plus the unique user index guarantees a single settings
+  // document per user, even for simultaneous first saves.
+  const settings = await Settings.findOneAndUpdate(
     { user: user._id },
-    settingsInput,
-    { returnDocument: "after", runValidators: true },
+    { $set: settingsInput },
+    {
+      upsert: true,
+      returnDocument: "after",
+      runValidators: true,
+      setDefaultsOnInsert: true,
+    },
   );
-  return NextResponse.json(updatedSettings);
+  return NextResponse.json(settings);
 });

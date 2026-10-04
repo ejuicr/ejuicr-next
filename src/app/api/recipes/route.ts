@@ -40,11 +40,11 @@ export const POST = apiHandler(async (request) => {
 
   await connectDB();
 
-  // A user may not have two recipes with the same title.
+  // A user may not have two recipes with the same title, ignoring case.
   const duplicateRecipe = await Recipe.findOne({
     author: user._id,
     name: title,
-  });
+  }).collation({ locale: "en", strength: 2 });
   if (duplicateRecipe) {
     throw new ApiError(
       400,

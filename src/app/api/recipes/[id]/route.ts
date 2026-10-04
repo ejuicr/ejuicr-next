@@ -40,6 +40,22 @@ export const PUT = apiHandler<RouteParams>(async (request, { params }) => {
   }
 
   await connectDB();
+
+  // A user may not have two recipes with the same title, ignoring case.
+  if (recipeInput.name) {
+    const duplicateRecipe = await Recipe.findOne({
+      _id: { $ne: id },
+      author: user._id,
+      name: recipeInput.name,
+    }).collation({ locale: "en", strength: 2 });
+    if (duplicateRecipe) {
+      throw new ApiError(
+        400,
+        `You already have a recipe named ${recipeInput.name}. Please use a different title.`,
+      );
+    }
+  }
+
   // Scope the update to the current owner in the query itself so ownership
   // can never be reassigned and another user's recipe is never disclosed.
   const updatedRecipe = await Recipe.findOneAndUpdate(

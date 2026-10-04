@@ -37,7 +37,8 @@
   }
 
   main {
-    @apply mx-auto max-w-[800px] px-4 pt-4;
+    /* 832px border-box keeps an 800px content column like the old front end. */
+    @apply mx-auto max-w-[832px] px-4 pt-4;
   }
 
   a:link,

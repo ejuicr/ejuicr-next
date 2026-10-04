@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Locator } from "@playwright/test";
 
 test.describe("calculator", () => {
   test("recalculates and persists an input-only draft", async ({ page }) => {
@@ -119,17 +119,43 @@ test.describe("layout and accessibility", () => {
     ).toBeLessThan(1);
 
     // Delete is red in its static state (no gradient background image).
-    const deleteStyle = await page
-      .getByTestId("flavor1DeleteBtn")
-      .evaluate((element) => {
+    const deleteButton = page.getByTestId("flavor1DeleteBtn");
+    const addFlavorButton = page.getByRole("button", { name: "Add Flavor" });
+    const readBackground = (locator: Locator) =>
+      locator.evaluate((element) => {
         const style = getComputedStyle(element);
-        return {
-          background: style.backgroundColor,
-          image: style.backgroundImage,
-        };
+        return `${style.backgroundColor} ${style.backgroundImage}`;
       });
+    const deleteStyle = await deleteButton.evaluate((element) => {
+      const style = getComputedStyle(element);
+      return {
+        background: style.backgroundColor,
+        image: style.backgroundImage,
+      };
+    });
     expect(deleteStyle.background).toBe("rgb(255, 85, 85)");
     expect(deleteStyle.image).toBe("none");
+
+    // Delete shares the standard hover/active background with other buttons.
+    // hover() scrolls each button into view; release the pressed mouse away
+    // from the button so no click handler ever fires.
+    await deleteButton.hover();
+    const deleteHover = await readBackground(deleteButton);
+    await addFlavorButton.hover();
+    const addFlavorHover = await readBackground(addFlavorButton);
+    expect(deleteHover).toBe(addFlavorHover);
+
+    await deleteButton.hover();
+    await page.mouse.down();
+    const deleteActive = await readBackground(deleteButton);
+    await page.mouse.move(0, 0);
+    await page.mouse.up();
+    await addFlavorButton.hover();
+    await page.mouse.down();
+    const addFlavorActive = await readBackground(addFlavorButton);
+    await page.mouse.move(0, 0);
+    await page.mouse.up();
+    expect(deleteActive).toBe(addFlavorActive);
 
     // Buttons and the bordered inputs are 35px tall.
     const addFlavorHeight = await page

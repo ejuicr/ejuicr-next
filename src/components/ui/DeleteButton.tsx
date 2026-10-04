@@ -2,6 +2,7 @@
 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTrash } from "@fortawesome/free-solid-svg-icons";
+import Button from "@/components/ui/Button";
 
 export default function DeleteButton({
   testId,
@@ -15,15 +16,15 @@ export default function DeleteButton({
   label?: string;
 }) {
   return (
-    <button
+    <Button
+      variant="red"
       data-testid={testId}
-      type="button"
       title={label}
       aria-label={label}
       onClick={() => handler(index)}
-      className="h-[35px] w-[35px] bg-brand-red bg-none p-0 hover:bg-brand-red active:bg-brand-red"
+      className="h-[35px] w-[35px] p-0"
     >
       <FontAwesomeIcon icon={faTrash} className="text-[18px]" />
-    </button>
+    </Button>
   );
 }

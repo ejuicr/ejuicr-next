@@ -133,6 +133,8 @@ export default function SaveRecipe({
               <button
                 type="button"
                 className="btn-green h-full text-[0.95rem]"
+                disabled={Boolean(calculator.error)}
+                title={calculator.error || undefined}
                 onClick={handleClickSaveRecipe}
               >
                 <FontAwesomeIcon icon={faSave} className="mr-2" />

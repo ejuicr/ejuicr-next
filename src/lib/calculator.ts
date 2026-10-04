@@ -6,6 +6,8 @@
 
 import {
   calculateWeight,
+  isResultsInvalid,
+  roundToTwoDecimalPlaces,
   totalFlavorPg,
   totalFlavorVg,
 } from "@/lib/helpers";
@@ -90,6 +92,81 @@ export function calculateResults(input: CalculatorInput): CalculatorResults {
     (targetVg / 100) * targetAmount - nicResults.vg - totalFlavorVg(flavorStates);
 
   return { nicResults, flavors: flavorStates, pgRequired, vgRequired };
+}
+
+export interface CalculatorStatus {
+  nicPercentage: number;
+  pgPercentage: number;
+  vgPercentage: number;
+  pgWeight: number;
+  vgWeight: number;
+  nicInvalid: boolean;
+  pgInvalid: boolean;
+  vgInvalid: boolean;
+  error: string;
+}
+
+/** Input percentages are always constrained to the 0–100 range. */
+export function clampPercentage(value: number): number {
+  return Math.min(100, Math.max(0, value));
+}
+
+/**
+ * Centralized display math and validity check. The calculator shows one
+ * message and Save is disabled whenever the mixture is impossible.
+ */
+export function getCalculatorStatus(
+  input: CalculatorInput,
+  results: CalculatorResults,
+): CalculatorStatus {
+  const { targetAmount, targetNicStrength, nicConfig } = input;
+  const { nicResults } = results;
+
+  const pgPercentage =
+    targetAmount > 0
+      ? roundToTwoDecimalPlaces((results.pgRequired / targetAmount) * 100)
+      : 0;
+  const vgPercentage =
+    targetAmount > 0
+      ? roundToTwoDecimalPlaces((results.vgRequired / targetAmount) * 100)
+      : 0;
+  const pgWeight = roundToTwoDecimalPlaces(results.pgRequired * 1.036);
+  const vgWeight = roundToTwoDecimalPlaces(results.vgRequired * 1.26);
+
+  const nicInvalid = isResultsInvalid(
+    nicResults.percentage,
+    nicResults.amount,
+    nicResults.weight,
+  );
+  const pgInvalid = isResultsInvalid(
+    pgPercentage,
+    results.pgRequired,
+    pgWeight,
+  );
+  const vgInvalid = isResultsInvalid(
+    vgPercentage,
+    results.vgRequired,
+    vgWeight,
+  );
+
+  const error =
+    nicInvalid || pgInvalid || vgInvalid
+      ? "The formula is not possible with the current values you have entered."
+      : nicConfig.strength < targetNicStrength
+        ? `Your desired strength of ${targetNicStrength}mg is not possible with this nicotine base. You will need to use a nicotine base liquid with a higher strength.`
+        : "";
+
+  return {
+    nicPercentage: roundToTwoDecimalPlaces(nicResults.percentage),
+    pgPercentage,
+    vgPercentage,
+    pgWeight,
+    vgWeight,
+    nicInvalid,
+    pgInvalid,
+    vgInvalid,
+    error,
+  };
 }
 
 /** Serialize an input-only draft with an explicit format version. */

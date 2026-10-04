@@ -11,16 +11,16 @@ import { ErrorMessage } from "@/components/ui/Messages";
 import PageHeading from "@/components/ui/PageHeading";
 import Spinner from "@/components/ui/Spinner";
 import { api } from "@/lib/client-api";
-import type { Recipe } from "@/types";
+import type { RecipeSummary } from "@/types";
 
-const sortByDate = (recipes: Recipe[]) =>
+const sortByDate = (recipes: RecipeSummary[]) =>
   [...recipes].sort(
     (a, b) =>
       new Date(b.updatedAt ?? 0).getTime() - new Date(a.updatedAt ?? 0).getTime(),
   );
 
 export default function RecipesList() {
-  const [recipes, setRecipes] = useState<Recipe[] | null>(null);
+  const [recipes, setRecipes] = useState<RecipeSummary[] | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSortByTitle, setIsSortByTitle] = useState(false);
   const [error, setError] = useState("");
@@ -28,7 +28,7 @@ export default function RecipesList() {
 
   useEffect(() => {
     api
-      .get<Recipe[]>("/api/recipes")
+      .get<RecipeSummary[]>("/api/recipes")
       .then((data) => setRecipes(sortByDate(data)))
       .catch((caughtError) =>
         setError(

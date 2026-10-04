@@ -46,7 +46,9 @@ describe("MyAccount set password", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.get.mockImplementation((path: string) =>
-      Promise.resolve(path === "/api/user/me" ? { ...mocks.user } : []),
+      Promise.resolve(
+        path === "/api/user/me" ? { ...mocks.user } : { count: 2 },
+      ),
     );
     mocks.post.mockResolvedValue({ message: "Your password has been set." });
   });

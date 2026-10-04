@@ -135,7 +135,7 @@ server, so existing data continues to work.
 | DELETE | `/api/user`                     | Private | Delete the account and recipes.    |
 | DELETE | `/api/user/google`              | Private | Unlink a Google account.           |
 | DELETE | `/api/user/twitter`             | Private | Unlink a Twitter account.          |
-| GET    | `/api/recipes`                  | Private | List the user's recipes.           |
+| GET    | `/api/recipes`                  | Private | List recipe summaries (`?count=1`).|
 | POST   | `/api/recipes`                  | Private | Create a recipe.                   |
 | GET    | `/api/recipes/:id`              | Private | Get one recipe.                    |
 | PUT    | `/api/recipes/:id`              | Private | Update a recipe.                   |

@@ -222,4 +222,22 @@ describe("Calculator initialization", () => {
     expect(mocks.get).not.toHaveBeenCalled();
     expect(screen.queryByTestId("applyDefaultsBtn")).not.toBeInTheDocument();
   });
+
+  it("disables saving while the formula is not possible", async () => {
+    const pending = deferred<unknown>();
+    mocks.get.mockReturnValue(pending.promise);
+
+    render(<Calculator />);
+
+    fireEvent.click(screen.getByTestId("nicConfigBtn"));
+    fireEvent.change(screen.getByTestId("nicConfigStrengthInput"), {
+      target: { value: "3" },
+    });
+    expect(screen.getByRole("button", { name: "Save" })).toBeDisabled();
+
+    fireEvent.change(screen.getByTestId("nicConfigStrengthInput"), {
+      target: { value: "100" },
+    });
+    expect(screen.getByRole("button", { name: "Save" })).toBeEnabled();
+  });
 });

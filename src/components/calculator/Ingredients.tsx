@@ -4,7 +4,7 @@ import { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPlus } from "@fortawesome/free-solid-svg-icons";
 import ConfigButton from "@/components/ui/ConfigButton";
-import { formatMeasurement, isResultsInvalid, roundToTwoDecimalPlaces } from "@/lib/helpers";
+import { formatMeasurement } from "@/lib/helpers";
 import Flavor from "./Flavor";
 import NicConfig from "./NicConfig";
 import type { CalculatorController } from "./useCalculator";
@@ -17,10 +17,17 @@ export default function Ingredients({
   const {
     nicConfig,
     nicResults,
-    targetNicStrength,
-    targetAmount,
     pgRequired,
     vgRequired,
+    nicPercentage,
+    pgPercentage,
+    vgPercentage,
+    pgWeight,
+    vgWeight,
+    nicInvalid,
+    pgInvalid,
+    vgInvalid,
+    error,
     flavors,
     showNicotine,
     units,
@@ -28,34 +35,6 @@ export default function Ingredients({
   } = calculator;
 
   const [nicConfigOpen, setNicConfigOpen] = useState(false);
-
-  const pgPercentage =
-    targetAmount > 0
-      ? roundToTwoDecimalPlaces((pgRequired / targetAmount) * 100)
-      : 0;
-  const vgPercentage =
-    targetAmount > 0
-      ? roundToTwoDecimalPlaces((vgRequired / targetAmount) * 100)
-      : 0;
-
-  const pgWeight = roundToTwoDecimalPlaces(pgRequired * 1.036);
-  const vgWeight = roundToTwoDecimalPlaces(vgRequired * 1.26);
-
-  const isNicInvalid = isResultsInvalid(
-    nicResults.percentage,
-    nicResults.amount,
-    nicResults.weight,
-  );
-  const isPgInvalid = isResultsInvalid(pgPercentage, pgRequired, pgWeight);
-  const isVgInvalid = isResultsInvalid(vgPercentage, vgRequired, vgWeight);
-
-  // The error is derived from the current values, so no state/effect needed.
-  const error =
-    isNicInvalid || isPgInvalid || isVgInvalid
-      ? "The formula is not possible with the current values you have entered."
-      : nicConfig.strength < targetNicStrength
-        ? `Your desired strength of ${targetNicStrength}mg is not possible with this nicotine base. You will need to use a nicotine base liquid with a higher strength.`
-        : "";
 
   const amountCells = (amount: number, weight: number) => {
     if (units === "weight") {
@@ -109,7 +88,7 @@ export default function Ingredients({
       )}
       {showNicotine && (
         <>
-          <div className={rowClass(isNicInvalid)}>
+          <div className={rowClass(nicInvalid)}>
             <div className="flex items-center">
               <ConfigButton
                 testId="nicConfigBtn"
@@ -122,7 +101,7 @@ export default function Ingredients({
               </span>
             </div>
             <div>
-              <span>{`${roundToTwoDecimalPlaces(nicResults.percentage)}%`}</span>
+              <span>{`${nicPercentage}%`}</span>
             </div>
             {amountCells(nicResults.amount, nicResults.weight)}
           </div>
@@ -130,7 +109,7 @@ export default function Ingredients({
           <hr />
         </>
       )}
-      <div className={rowClass(isPgInvalid)}>
+      <div className={rowClass(pgInvalid)}>
         <div>
           <span className="base-ingredient">PG</span>
         </div>
@@ -140,7 +119,7 @@ export default function Ingredients({
         {amountCells(pgRequired, pgWeight)}
       </div>
       <hr />
-      <div className={rowClass(isVgInvalid)}>
+      <div className={rowClass(vgInvalid)}>
         <div>
           <span className="base-ingredient">VG</span>
         </div>

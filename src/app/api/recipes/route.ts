@@ -8,10 +8,20 @@ import { parseRecipeInput } from "@/lib/validation";
 // @desc  Get all recipes for the current user
 // @route GET /api/recipes
 // @access Private
-export const GET = apiHandler(async () => {
+export const GET = apiHandler(async (request) => {
   const user = await requireUser();
   await connectDB();
-  const recipes = await Recipe.find({ author: user._id });
+
+  const url = new URL(request.url);
+  if (url.searchParams.get("count") === "1") {
+    const count = await Recipe.countDocuments({ author: user._id });
+    return NextResponse.json({ count });
+  }
+
+  // List views only need the summary fields.
+  const recipes = await Recipe.find({ author: user._id })
+    .select("name updatedAt")
+    .lean();
   return NextResponse.json(recipes);
 });
 

@@ -37,6 +37,13 @@ export interface Recipe {
   updatedAt?: string;
 }
 
+/** Projection returned by the recipe list endpoint. */
+export interface RecipeSummary {
+  _id: string;
+  name: string;
+  updatedAt?: string;
+}
+
 export type MixingUnits = "weight" | "volume" | "both";
 
 export interface SettingsData {

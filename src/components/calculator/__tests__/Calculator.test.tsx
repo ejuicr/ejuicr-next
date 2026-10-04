@@ -132,6 +132,15 @@ describe("Flavor", () => {
     expect(percentInput).toHaveValue(5);
   });
 
+  it("clamps percentages to the valid range", () => {
+    render(app);
+    const percentInput = getByTestId("flavor1PercentInput");
+    fireEvent.change(percentInput, { target: { value: "150" } });
+    expect(percentInput).toHaveValue(100);
+    fireEvent.change(percentInput, { target: { value: "-5" } });
+    expect(percentInput).toHaveValue(0);
+  });
+
   it("'add' button displays a new flavor row", () => {
     render(app);
     fireEvent.click(getByTestId("flavorAddBtn"));

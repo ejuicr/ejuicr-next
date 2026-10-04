@@ -4,8 +4,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "@/components/providers/AuthProvider";
 import {
   calculateResults,
+  clampPercentage,
   createDefaultFlavors,
   flavorInputsFromRecipe,
+  getCalculatorStatus,
   parseCalculatorDraft,
   serializeCalculatorDraft,
 } from "@/lib/calculator";
@@ -86,6 +88,43 @@ export function useCalculator(recipe?: Recipe) {
         }),
       [targetPg, targetVg, targetNicStrength, targetAmount, nicConfig, flavors],
     );
+
+  const {
+    nicPercentage,
+    pgPercentage,
+    vgPercentage,
+    pgWeight,
+    vgWeight,
+    nicInvalid,
+    pgInvalid,
+    vgInvalid,
+    error,
+  } = useMemo(
+    () =>
+      getCalculatorStatus(
+        {
+          targetPg,
+          targetVg,
+          targetNicStrength,
+          targetAmount,
+          nicConfig,
+          flavors,
+        },
+        { nicResults, flavors: flavorResults, pgRequired, vgRequired },
+      ),
+    [
+      targetPg,
+      targetVg,
+      targetNicStrength,
+      targetAmount,
+      nicConfig,
+      flavors,
+      nicResults,
+      flavorResults,
+      pgRequired,
+      vgRequired,
+    ],
+  );
 
   // Restore persisted inputs on first mount. This has to run after mount so
   // the server-rendered defaults keep matching the first client render
@@ -270,7 +309,9 @@ export function useCalculator(recipe?: Recipe) {
   const handleChangeFlavorPercentage = useCallback(
     (index: number, value: string | number) => {
       hasDraftRef.current = true;
-      const roundedValue = roundToTwoDecimalPlaces(parseNumberInput(value));
+      const roundedValue = clampPercentage(
+        roundToTwoDecimalPlaces(parseNumberInput(value)),
+      );
       setFlavors((current) =>
         current.map((flavor, flavorIndex) =>
           flavorIndex === index
@@ -348,6 +389,15 @@ export function useCalculator(recipe?: Recipe) {
     flavors: flavorResults,
     pgRequired,
     vgRequired,
+    nicPercentage,
+    pgPercentage,
+    vgPercentage,
+    pgWeight,
+    vgWeight,
+    nicInvalid,
+    pgInvalid,
+    vgInvalid,
+    error,
     showNicotine,
     hasSavedDefaults,
     handleApplyDefaults,

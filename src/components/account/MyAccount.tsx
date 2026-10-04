@@ -16,14 +16,14 @@ import PageHeading from "@/components/ui/PageHeading";
 import Spinner from "@/components/ui/Spinner";
 import { api } from "@/lib/client-api";
 import { capitalizeFirstLetter, validatePassword } from "@/lib/helpers";
-import type { PublicUser, Recipe } from "@/types";
+import type { PublicUser } from "@/types";
 
 type LinkedProvider = "google" | "twitter";
 
 export default function MyAccount() {
   const { user, setUser, logout } = useAuth();
   const router = useRouter();
-  const [recipes, setRecipes] = useState<Recipe[]>([]);
+  const [recipes, setRecipes] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [password, setPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -41,12 +41,12 @@ export default function MyAccount() {
 
     Promise.all([
       api.get<PublicUser>("/api/user/me"),
-      api.get<Recipe[]>("/api/recipes"),
+      api.get<{ count: number }>("/api/recipes?count=1"),
     ])
-      .then(([me, recipeList]) => {
+      .then(([me, countData]) => {
         if (cancelled) return;
         setUser(me);
-        setRecipes(recipeList);
+        setRecipes(countData.count ?? 0);
       })
       .catch((caughtError) => {
         if (!cancelled) {
@@ -233,12 +233,10 @@ export default function MyAccount() {
               {user.email}
             </p>
           )}
-          {recipes.length > 0 && (
+          {recipes > 0 && (
             <p className="text-[1.15rem]">
               <Link href="/recipes">
-                {`${recipes.length} Saved Recipe${
-                  recipes.length > 1 ? "s" : ""
-                }`}
+                {`${recipes} Saved Recipe${recipes > 1 ? "s" : ""}`}
               </Link>
             </p>
           )}

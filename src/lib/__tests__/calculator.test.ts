@@ -2,7 +2,9 @@ import { describe, expect, it } from "vitest";
 import {
   CALCULATOR_STORAGE_VERSION,
   calculateResults,
+  clampPercentage,
   flavorInputsFromRecipe,
+  getCalculatorStatus,
   parseCalculatorDraft,
   serializeCalculatorDraft,
 } from "@/lib/calculator";
@@ -72,6 +74,34 @@ describe("calculateResults", () => {
 
     expect(results.nicResults.amount).toBeCloseTo(0.006);
     expect(results.nicResults.percentage).toBeCloseTo(6);
+  });
+});
+
+describe("getCalculatorStatus", () => {
+  it("flags a mixture whose nicotine base is weaker than the target", () => {
+    const input: CalculatorInput = {
+      ...baseInput,
+      nicConfig: { strength: 3, pg: 100, vg: 0 },
+    };
+
+    expect(getCalculatorStatus(input, calculateResults(input)).error).toMatch(
+      /not possible/i,
+    );
+  });
+
+  it("reports no error for a valid mixture", () => {
+    const status = getCalculatorStatus(baseInput, calculateResults(baseInput));
+
+    expect(status.error).toBe("");
+    expect(status.pgPercentage).toBeCloseTo(19);
+  });
+});
+
+describe("clampPercentage", () => {
+  it("keeps percentages within 0-100", () => {
+    expect(clampPercentage(150)).toBe(100);
+    expect(clampPercentage(-5)).toBe(0);
+    expect(clampPercentage(42.5)).toBe(42.5);
   });
 });
 

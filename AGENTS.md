@@ -53,8 +53,13 @@ run all of these before finishing:
 npm run lint
 npm run typecheck
 npm test
+npm run test:integration
 npm run build
 ```
+
+`npm run test:integration` uses an in-memory MongoDB by default; set
+`MONGODB_TEST_URI` to run against an isolated server instead. CI supplies a
+MongoDB service container. Never point it at development or production.
 
 For UI changes, also run the browser smoke suite using the successful production
 build above. Rebuild only if subsequent changes affect the build. Install

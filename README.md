@@ -88,12 +88,26 @@ otherwise Twitter sign-in cannot create an account.
 | `npm run lint`      | Run ESLint.                              |
 | `npm run typecheck` | Run the TypeScript compiler.             |
 | `npm test`          | Run the test suite once.                 |
+| `npm run test:integration` | Run database-backed integration tests (needs `MONGODB_TEST_URI`). |
 | `npm run test:watch`| Run tests in watch mode.                 |
 | `npm run test:e2e`  | Run the Playwright browser smoke suite.  |
 | `npm run test:e2e:install` | Install Firefox for the smoke suite. |
 
 The browser smoke suite runs against a production build, so run
 `npm run build && npm run test:e2e` (and `npm run test:e2e:install` once).
+
+Database-backed integration tests exercise password races, duplicate writes,
+provider-identity conflicts, and deletion/write overlap against a real
+MongoDB. They create and drop a temporary database; by default they start an
+in-memory MongoDB, or use an isolated server when `MONGODB_TEST_URI` is set:
+
+```
+npm run test:integration
+MONGODB_TEST_URI=mongodb://127.0.0.1:27017 npm run test:integration
+```
+
+CI (`.github/workflows/ci.yml`) runs all of the above with a MongoDB service
+container and test-only credentials.
 
 ## Project structure
 

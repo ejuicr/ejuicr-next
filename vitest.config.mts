@@ -1,5 +1,5 @@
 import { fileURLToPath } from "node:url";
-import { defineConfig } from "vitest/config";
+import { configDefaults, defineConfig } from "vitest/config";
 
 export default defineConfig({
   resolve: {
@@ -11,6 +11,8 @@ export default defineConfig({
     environment: "jsdom",
     setupFiles: ["./src/test/setup.ts"],
     include: ["src/**/*.test.{ts,tsx}"],
+    // Database-backed integration tests run under vitest.integration.config.mts.
+    exclude: [...configDefaults.exclude, "**/*.integration.test.ts"],
     restoreMocks: true,
   },
 });

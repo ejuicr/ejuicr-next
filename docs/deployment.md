@@ -134,14 +134,20 @@ reachable URL when hosting elsewhere.
 
 ## Verification after any change
 
-Run all four locally:
+Run all of these locally:
 
 ```
 npm run lint
 npm run typecheck
 npm test
+npm run test:integration   # in-memory MongoDB, or set MONGODB_TEST_URI
 npm run build
 ```
+
+`npm run test:integration` creates and drops its own temporary database; it
+starts an in-memory MongoDB by default, or uses the isolated server in
+`MONGODB_TEST_URI` when set. Never point that variable at development or
+production. CI supplies a local MongoDB service container.
 
 Then smoke-test production:
 

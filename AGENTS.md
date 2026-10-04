@@ -1,5 +1,7 @@
 # ejuicr – agent notes
 
+Do not make changes to `docs/todo.md`. They are notes for the human, managed by the human.
+
 ## Next.js version
 
 <!-- BEGIN:nextjs-agent-rules -->

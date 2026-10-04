@@ -33,6 +33,10 @@ is:
 2. Wait for `Validation` to pass.
 3. Push the same commit to `master`, or merge it through a pull request.
 
+`scripts/push-gated.sh` automates that sequence (it requires an
+authenticated `gh`): it pushes the current commit to `ci/gated-<sha>`, waits
+for the check, pushes to `master`, and deletes the temporary branch.
+
 Vercel deploys the resulting `master` push.
 
 ## Environment mapping

@@ -1,9 +1,18 @@
 # Architecture decisions
 
 Deliberate choices that should not be revisited casually. Each record states
-the context, the decision, and its consequences. The October 2026 review that
-produced these decisions was removed after completion; its full history
-remains in git (`git show <commit>:docs/review-2026-10-04.md`).
+the context, the decision, and its consequences. The October 2026 reviews
+that produced and then hardened these decisions were removed after
+completion; their full history remains in git. Recover a removed review by
+finding the commit that deleted it and reading the file from that commit's
+parent:
+
+```sh
+git log --diff-filter=D --oneline -- docs/review-2026-10-04.md
+git show 076aa30^:docs/review-2026-10-04.md
+```
+
+The same pattern recovers `docs/review-2026-10-05.md` and any later review.
 
 ## ADR-001 — Reject existing accounts on public signup
 

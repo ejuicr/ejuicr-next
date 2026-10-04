@@ -1,7 +1,5 @@
 # ejuicr – agent notes
 
-Do not make changes to `docs/todo.md`. They are notes for the human, managed by the human.
-
 ## Next.js version
 
 <!-- BEGIN:nextjs-agent-rules -->
@@ -32,6 +30,9 @@ the UI and the REST API. MongoDB via Mongoose; sessions are JWTs in an
   `ingredients.nicotine`, ...) so existing MongoDB data stays compatible.
 - Theming lives in `src/app/globals.css` (`@theme` tokens from the old
   Dracula-inspired palette). The app is dark-only.
+- Deliberate architecture decisions are recorded as ADRs in
+  `docs/DECISIONS.md`; read it before changing auth, data, or calculator
+  behavior.
 
 ## Deployment
 
@@ -47,8 +48,6 @@ the UI and the REST API. MongoDB via Mongoose; sessions are JWTs in an
   inlined at build time, so set them before the build or redeploy after.
 - Full runbook, known quirks, and post-change verification steps live in
   `docs/deployment.md`.
-- `todo.md` is the maintainer's personal notes file; do not read or modify
-  it unless explicitly asked.
 - Never commit `.env.local`; secrets live there and in Vercel env vars.
 
 ## Validation

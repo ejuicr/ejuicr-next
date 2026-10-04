@@ -110,8 +110,8 @@ reachable URL when hosting elsewhere.
 
 ## Known quirks
 
-- **Authentication and data invariants**: see "Decisions and invariants"
-  below before changing auth, session, password, or uniqueness behavior.
+- **Authentication and data invariants**: read `docs/DECISIONS.md` before
+  changing auth, session, password, or uniqueness behavior.
 - **Local dev DNS**: the LAN router (`192.168.50.1`) has a stale negative
   cache for the Atlas SRV record (from when the cluster was paused), so
   `querySrv ENOTFOUND` is returned even though public DNS resolves it. Fix
@@ -127,74 +127,10 @@ reachable URL when hosting elsewhere.
 - **Old infrastructure**: the old `ejuicr-server` backend and Vite front end
   are retired. The old backend had been down for 30+ days (proven by the
   Atlas auto-pause) and its GitHub Actions self-hosted runner is gone.
-  Cleanup was deliberately skipped; nothing depends on it.
-
-## Decisions and invariants
-
-Deliberate choices recorded in October 2026, after the completed review was
-removed. Treat these as invariants unless there is a concrete reason to change
-them; the reasoning and per-item verification history remain in git history
-(`git log` and `git show <commit>:docs/review-2026-10-04.md`).
-
-### Authentication and sessions
-
-- Public signup (`POST /api/user`) rejects every existing email. Accounts
-  created through OAuth add a password with the authenticated
-  `POST /api/user/set-password`; My Account uses that endpoint.
-- `sessionVersion` on the user revokes old sessions: setting, changing, or
-  resetting a password bumps it, and signed-in flows re-issue a cookie for the
-  current session. Sessions minted before versioning have no version and keep
-  working until the account's first password change.
-- Password-reset links are single-use: tokens carry a `password-reset`
-  purpose and a stored random nonce, consumed atomically. Requesting a new
-  link invalidates earlier ones.
-- Google links match by `sub` first; attaching Google to an account or
-  creating one from Google requires the `email_verified` claim. Unlinking the
-  last sign-in method is refused server-side.
-- Password policy: 6–72 UTF-8 bytes, matching bcrypt's effective limit.
-  Existing passwords longer than 72 bytes still authenticate and can be
-  changed to one within the policy.
-- Rate limiting is in-process and per-instance (best effort, not a global
-  cap): signup 10/15 min per IP and 3/15 min per email, login 20 and 10,
-  password reset 10 and 3. A distributed store is needed for a global limit.
-- Password-reset requests always return the same generic response, so the
-  endpoint cannot be used to discover accounts.
-
-### Data
-
-- Recipes: unique case-insensitive compound index `(author, name)`
-  (`author_title_unique`, collation strength 2). Create and update duplicate
-  checks use the same collation.
-- Settings: unique `user` index and an atomic upsert in `POST /api/settings`.
-  An empty payload creates schema defaults on the first save and is rejected
-  once settings exist.
-- Account deletion removes recipes and settings before the user document.
-- Mongoose creates these indexes automatically on the first connection after
-  a deploy (the `autoIndex` default). If autoIndex is ever disabled, create
-  them manually and verify with `db.collection.getIndexes()`.
-
-### Calculator
-
-- Persisted drafts (localStorage key `calculator`) are versioned input-only
-  (`version: 2`); derived amounts and weights are always recalculated and
-  invalid stored values are dropped rather than trusted.
-- Initialization precedence: an opened recipe wins, then an existing draft or
-  active edits, then saved defaults. Defaults apply to a fresh calculator or
-  through the explicit "Apply Saved Defaults" action.
-- Nicotine controls are never hidden while nicotine is active
-  (`targetNicStrength > 0`).
-
-### Operations
-
-- Read-only duplicate audit:
-  `node --env-file=.env.local scripts/inspect-duplicates.mjs --database ejuicr-production`
-  (also accepts `ejuicr-staging`; exit code 2 means duplicates were found).
-- The retired Vite front end is still deployed at
-  <https://ejuicr.netlify.app>. Backend-dependent pages fail, but the
-  calculator remains usable as a visual reference for UI parity. Update or
-  remove this note if that deployment is taken down.
-- `todo.md` at the repository root is the maintainer's personal notes file and
-  is git-ignored; do not commit it.
+  Cleanup was deliberately skipped; nothing depends on it. The retired front
+  end is still deployed at <https://ejuicr.netlify.app>: backend-dependent
+  pages fail, but the calculator remains usable as a visual reference for UI
+  parity. Update or remove this note if that deployment is taken down.
 
 ## Verification after any change
 
@@ -217,6 +153,14 @@ Then smoke-test production:
    `oauth_token` and sets the request-token cookie.
 5. In a browser: Google + X sign-in, save/view a recipe, settings
    persistence, change password, and password reset email end-to-end.
+
+Read-only duplicate audit (exit code 2 means duplicates were found):
+
+```
+node --env-file=.env.local scripts/inspect-duplicates.mjs --database ejuicr-production
+```
+
+It also accepts `--database ejuicr-staging`.
 
 ## API compatibility
 

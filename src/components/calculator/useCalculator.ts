@@ -68,12 +68,22 @@ export function useCalculator(recipe?: Recipe) {
     recipe ? recipe.strength <= 0 : false,
   );
   const [units, setUnits] = useState<SettingsData["units"]>("both");
-  const [hasSavedDefaults, setHasSavedDefaults] = useState(false);
+  // Account whose saved settings are currently loaded. Comparing this with
+  // the signed-in account derives whether defaults are available, so logging
+  // out or switching accounts hides them without clearing state in an effect.
+  const [savedDefaultsFor, setSavedDefaultsFor] = useState<string | null>(null);
 
   // Tracks whether the current values came from an existing draft or from
   // edits made before settings loaded; either outranks saved defaults.
   const hasDraftRef = useRef(false);
-  const savedSettingsRef = useRef<SettingsData | null>(null);
+  const savedSettingsRef = useRef<{
+    accountId: string;
+    settings: SettingsData;
+  } | null>(null);
+
+  const accountId = user?._id ?? null;
+  const hasSavedDefaults =
+    accountId !== null && savedDefaultsFor === accountId;
 
   const { nicResults, flavors: flavorResults, pgRequired, vgRequired } =
     useMemo(
@@ -179,20 +189,33 @@ export function useCalculator(recipe?: Recipe) {
     ]);
   }, []);
 
-  // Load the signed-in user's saved settings.
-  const settingsLoadedFor = useRef<string | null>(null);
+  // Load the signed-in user's saved settings. The loaded account is recorded
+  // only after a request succeeds, so a same-account auth refresh while the
+  // request is pending starts a fresh request instead of permanently
+  // cancelling the only one. Defaults for an old account are never offered or
+  // applied to another account because every use checks the account ID.
+  const settingsAccount = useRef<string | null>(null);
   useEffect(() => {
-    if (!user || settingsLoadedFor.current === user._id) return;
-    settingsLoadedFor.current = user._id;
+    if (!user) return;
+    if (settingsAccount.current === user._id) return;
 
+    const requestedAccountId = user._id;
     let cancelled = false;
     (async () => {
       try {
         const settings = await api.get<unknown>("/api/settings");
-        if (cancelled || !hasSettings(settings)) return;
+        if (cancelled) return;
 
-        savedSettingsRef.current = settings;
-        setHasSavedDefaults(true);
+        // Mark the account as loaded only after the request succeeds; a
+        // failed request stays retryable on the next auth refresh.
+        settingsAccount.current = requestedAccountId;
+        if (!hasSettings(settings)) return;
+
+        savedSettingsRef.current = {
+          accountId: requestedAccountId,
+          settings,
+        };
+        setSavedDefaultsFor(requestedAccountId);
 
         // Display preferences always apply.
         setUnits(settings.units);
@@ -354,9 +377,12 @@ export function useCalculator(recipe?: Recipe) {
   const handleAddFlavor = useCallback(() => {
     hasDraftRef.current = true;
     setFlavors((current) => {
-      // Saved flavor defaults apply to every newly added flavor. Guests and
+      // Saved flavor defaults apply to every newly added flavor, but only
+      // while the account they belong to is still signed in. Guests and
       // accounts without saved settings keep the neutral 100% PG / 0% base.
-      const defaults = savedSettingsRef.current?.flavor;
+      const saved = savedSettingsRef.current;
+      const defaults =
+        saved && saved.accountId === accountId ? saved.settings.flavor : null;
       const flavor: FlavorInput = {
         name: `Flavor ${current.length + 1}`,
         pg: defaults?.base.pg ?? 100,
@@ -365,7 +391,7 @@ export function useCalculator(recipe?: Recipe) {
       };
       return [...current, flavor];
     });
-  }, []);
+  }, [accountId]);
 
   // Never hide nicotine that is active in the current calculation, for
   // example a saved recipe opened while zero-nicotine defaults are enabled.
@@ -374,10 +400,10 @@ export function useCalculator(recipe?: Recipe) {
   // Deliberate action for replacing the current draft with saved defaults;
   // settings loading must never do this implicitly.
   const handleApplyDefaults = useCallback(() => {
-    const settings = savedSettingsRef.current;
-    if (!settings) return;
-    applySettings(settings);
-  }, [applySettings]);
+    const saved = savedSettingsRef.current;
+    if (!saved || saved.accountId !== accountId) return;
+    applySettings(saved.settings);
+  }, [accountId, applySettings]);
 
   return {
     targetPg,

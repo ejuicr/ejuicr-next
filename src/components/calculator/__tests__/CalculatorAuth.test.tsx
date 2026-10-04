@@ -76,15 +76,18 @@ const draft = {
 
 function deferred<T>() {
   let resolve!: (value: T) => void;
-  const promise = new Promise<T>((res) => {
+  let reject!: (reason?: unknown) => void;
+  const promise = new Promise<T>((res, rej) => {
     resolve = res;
+    reject = rej;
   });
-  return { promise, resolve };
+  return { promise, resolve, reject };
 }
 
 describe("Calculator initialization", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.spyOn(console, "error").mockImplementation(() => {});
     mocks.user = {
       _id: "user-1",
       email: "member@example.com",
@@ -221,6 +224,140 @@ describe("Calculator initialization", () => {
 
     expect(mocks.get).not.toHaveBeenCalled();
     expect(screen.queryByTestId("applyDefaultsBtn")).not.toBeInTheDocument();
+  });
+
+  it("still loads defaults when auth refreshes with a new object for the same account", async () => {
+    const first = deferred<unknown>();
+    const second = deferred<unknown>();
+    mocks.get
+      .mockReturnValueOnce(first.promise)
+      .mockReturnValueOnce(second.promise);
+
+    const { rerender } = render(<Calculator />);
+    // Authentication refresh replaces the user object but not the account.
+    mocks.user = { ...(mocks.user as Record<string, unknown>) };
+    rerender(<Calculator />);
+
+    // The first request is cancelled by the refresh when its response lands;
+    // the replacement request must not be skipped.
+    await act(async () => {
+      first.resolve({ ...settings, amount: 40 });
+    });
+    await act(async () => {
+      second.resolve({ ...settings, amount: 50 });
+    });
+
+    expect(mocks.get).toHaveBeenCalledTimes(2);
+    expect(screen.getByTestId("targetAmountInput")).toHaveValue(50);
+    expect(screen.getByTestId("applyDefaultsBtn")).toBeInTheDocument();
+  });
+
+  it("retries settings loading after a failure", async () => {
+    const failed = deferred<unknown>();
+    const retried = deferred<unknown>();
+    mocks.get
+      .mockReturnValueOnce(failed.promise)
+      .mockReturnValueOnce(retried.promise);
+
+    const { rerender } = render(<Calculator />);
+    await act(async () => {
+      failed.reject(new Error("network unavailable"));
+    });
+    expect(screen.queryByTestId("applyDefaultsBtn")).not.toBeInTheDocument();
+
+    mocks.user = { ...(mocks.user as Record<string, unknown>) };
+    rerender(<Calculator />);
+    await act(async () => {
+      retried.resolve(settings);
+    });
+
+    expect(mocks.get).toHaveBeenCalledTimes(2);
+    expect(screen.getByTestId("targetAmountInput")).toHaveValue(50);
+  });
+
+  it("ignores a late response for a previous account", async () => {
+    const first = deferred<unknown>();
+    mocks.get.mockReturnValueOnce(first.promise);
+
+    const { rerender } = render(<Calculator />);
+
+    mocks.user = {
+      _id: "user-2",
+      email: "other@example.com",
+      hasPassword: true,
+      hasGoogleLinked: false,
+      hasTwitterLinked: false,
+    };
+    const second = deferred<unknown>();
+    mocks.get.mockReturnValueOnce(second.promise);
+    rerender(<Calculator />);
+
+    expect(mocks.get).toHaveBeenCalledTimes(2);
+
+    await act(async () => {
+      first.resolve({ ...settings, amount: 40 });
+    });
+    // The first account's late response must not reach this account.
+    expect(screen.getByTestId("targetAmountInput")).toHaveValue(30);
+
+    await act(async () => {
+      second.resolve({ ...settings, amount: 20 });
+    });
+    expect(screen.getByTestId("targetAmountInput")).toHaveValue(20);
+  });
+
+  it("clears saved defaults on logout without replacing active inputs", async () => {
+    mocks.get.mockResolvedValue(settings);
+
+    const { rerender } = render(<Calculator />);
+    await waitFor(() =>
+      expect(screen.getByTestId("targetAmountInput")).toHaveValue(50),
+    );
+    expect(screen.getByTestId("applyDefaultsBtn")).toBeInTheDocument();
+
+    // A flavor added while signed in inherits the account's flavor default.
+    fireEvent.click(screen.getByTestId("flavorAddBtn"));
+    expect(screen.getByTestId("flavor2PercentInput")).toHaveValue(5);
+
+    mocks.user = null;
+    rerender(<Calculator />);
+
+    expect(screen.queryByTestId("applyDefaultsBtn")).not.toBeInTheDocument();
+    // Active inputs survive logout...
+    expect(screen.getByTestId("targetAmountInput")).toHaveValue(50);
+    // ...but new flavors no longer inherit the previous account's defaults.
+    fireEvent.click(screen.getByTestId("flavorAddBtn"));
+    expect(screen.getByTestId("flavor3PercentInput")).toHaveValue(0);
+  });
+
+  it("clears the previous account's defaults when the account changes", async () => {
+    mocks.get.mockResolvedValueOnce(settings);
+
+    const { rerender } = render(<Calculator />);
+    await waitFor(() =>
+      expect(screen.getByTestId("targetAmountInput")).toHaveValue(50),
+    );
+    expect(screen.getByTestId("applyDefaultsBtn")).toBeInTheDocument();
+
+    mocks.user = {
+      _id: "user-2",
+      email: "other@example.com",
+      hasPassword: true,
+      hasGoogleLinked: false,
+      hasTwitterLinked: false,
+    };
+    const pending = deferred<unknown>();
+    mocks.get.mockReturnValueOnce(pending.promise);
+    rerender(<Calculator />);
+
+    // The previous account's defaults are withheld while the new load runs.
+    expect(screen.queryByTestId("applyDefaultsBtn")).not.toBeInTheDocument();
+
+    await act(async () => {
+      pending.resolve({ ...settings, amount: 20 });
+    });
+    expect(screen.getByTestId("targetAmountInput")).toHaveValue(20);
+    expect(screen.getByTestId("applyDefaultsBtn")).toBeInTheDocument();
   });
 
   it("disables saving while the formula is not possible", async () => {

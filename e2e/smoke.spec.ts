@@ -1,0 +1,98 @@
+import { expect, test } from "@playwright/test";
+
+test.describe("calculator", () => {
+  test("recalculates and persists an input-only draft", async ({ page }) => {
+    await page.goto("/");
+    await expect(page.getByTestId("targetAmountInput")).toHaveValue("30");
+
+    await page.getByTestId("targetAmountInput").fill("45");
+
+    // 6 mg/mL * 45 mL / 100 mg/mL = 2.7 mL of nicotine.
+    await expect(page.getByText("2.7mL")).toBeVisible();
+
+    await page.reload();
+    await expect(page.getByTestId("targetAmountInput")).toHaveValue("45");
+
+    const draft = await page.evaluate(
+      () => JSON.parse(localStorage.getItem("calculator") ?? "null") as {
+        version?: number;
+        flavors?: Array<Record<string, unknown>>;
+      },
+    );
+    expect(draft.version).toBe(2);
+    expect(draft.flavors?.[0]).not.toHaveProperty("amount");
+  });
+
+  test("clamps flavor percentages to the valid range", async ({ page }) => {
+    await page.goto("/");
+    const percent = page.getByTestId("flavor1PercentInput");
+
+    await percent.fill("150");
+    await expect(percent).toHaveValue("100");
+  });
+});
+
+test.describe("layout and accessibility", () => {
+  test("uses the display font and a full-width content column", async ({
+    page,
+  }) => {
+    await page.goto("/");
+
+    const font = await page
+      .locator("h2")
+      .first()
+      .evaluate((element) => getComputedStyle(element).fontFamily);
+    expect(font).toContain("Bebas Neue");
+
+    const mainWidth = await page
+      .locator("main")
+      .evaluate((element) => element.getBoundingClientRect().width);
+    expect(mainWidth).toBeGreaterThan(700);
+  });
+
+  test("keeps the closed sidebar inert and restores focus after Escape", async ({
+    page,
+  }) => {
+    await page.goto("/");
+    const nav = page.locator('nav[aria-label="Main menu"]');
+    await expect(nav).toHaveAttribute("inert", "");
+
+    const menuButton = page.getByRole("button", { name: "Open menu" });
+    await menuButton.click();
+    await expect(nav).not.toHaveAttribute("inert", "");
+    await expect(
+      page.getByRole("button", { name: "Close menu" }),
+    ).toBeFocused();
+
+    await page.keyboard.press("Escape");
+    await expect(nav).toHaveAttribute("inert", "");
+    await expect(menuButton).toBeFocused();
+  });
+
+  test("labels auth inputs and restores list markers", async ({ page }) => {
+    await page.goto("/");
+    const nav = page.getByRole("navigation", { name: "Main menu" });
+    await page.getByRole("button", { name: "Open menu" }).click();
+    await nav.getByRole("link", { name: "Login/Signup" }).click();
+    await nav.getByRole("button", { name: "Sign in with Email" }).click();
+    await expect(page.getByLabel("Email")).toBeVisible();
+    await expect(page.getByLabel("Password")).toBeVisible();
+
+    await page.goto("/privacy-policy");
+    const listStyle = await page
+      .locator("ol")
+      .first()
+      .evaluate((element) => getComputedStyle(element).listStyleType);
+    expect(listStyle).toBe("decimal");
+  });
+
+  test("keeps the footer at the bottom on short pages", async ({ page }) => {
+    await page.goto("/no-such-page");
+
+    const [footerBottom, viewportHeight] = await page.evaluate(() => [
+      document.querySelector("footer")?.getBoundingClientRect().bottom ?? 0,
+      window.innerHeight,
+    ]);
+    expect(Math.round(footerBottom)).toBe(viewportHeight);
+  });
+});

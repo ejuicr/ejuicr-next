@@ -123,6 +123,28 @@ test.describe("layout and accessibility", () => {
     expect(inputOutline).toBe("none");
   });
 
+  test("shows the focus gradient on keyboard focus", async ({ page }) => {
+    await page.goto("/");
+
+    await page.keyboard.press("Tab");
+    const logo = page.locator("#page-header").getByLabel("ejuicr home");
+    await expect(logo).toBeFocused();
+    expect(
+      await logo.evaluate(
+        (element) => getComputedStyle(element).backgroundImage,
+      ),
+    ).toContain("linear-gradient");
+
+    await page.keyboard.press("Tab");
+    const menu = page.getByRole("button", { name: "Open menu" });
+    await expect(menu).toBeFocused();
+    expect(
+      await menu.evaluate(
+        (element) => getComputedStyle(element).backgroundImage,
+      ),
+    ).toContain("linear-gradient");
+  });
+
   test("keeps the closed sidebar inert and restores focus after Escape", async ({
     page,
   }) => {

@@ -221,6 +221,12 @@
     background: var(--color-brand-pink);
   }
 
+  /* Keyboard focus uses the same high-contrast gradient as hover; the
+     browser outline is suppressed globally for inputs and buttons. */
+  button:focus-visible {
+    background: linear-gradient(135deg, #ff79c6, #bd93f9);
+  }
+
   /* Transparent button variants must clear the gradient background image. */
   .btn-ghost,
   .btn-link {

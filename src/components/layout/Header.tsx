@@ -24,7 +24,12 @@ export default function Header({ toggleMenu }: { toggleMenu: () => void }) {
       className="mb-4 bg-ink px-4 py-4"
     >
       <div className="mx-auto flex max-w-[800px] items-center justify-between">
-        <Link href="/" onClick={handleClick} aria-label="ejuicr home">
+        <Link
+          href="/"
+          onClick={handleClick}
+          aria-label="ejuicr home"
+          className="-m-1 rounded-[3px] p-1 focus-visible:bg-gradient-to-br focus-visible:from-brand-pink focus-visible:to-brand-purple focus-visible:outline-none"
+        >
           <Image
             src="/logo.svg"
             alt="ejuicr logo"

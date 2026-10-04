@@ -27,6 +27,13 @@ const userSchema = new Schema(
       default: 0,
       required: true,
     },
+    // Set while account deletion is in progress. Dependent writes check it
+    // after writing so a request that raced the deletion cannot leave an
+    // orphan behind for an account that was successfully deleted.
+    deleting: {
+      type: Boolean,
+      default: false,
+    },
     // Single-use nonce for password-reset links; cleared when consumed.
     passwordResetNonce: {
       type: String,

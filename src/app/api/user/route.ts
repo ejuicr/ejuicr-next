@@ -72,6 +72,14 @@ export const POST = apiHandler(async (request) => {
 export const DELETE = apiHandler(async () => {
   const user = await requireUser();
   await connectDB();
+
+  // Mark the account as deleting before removing dependents. Dependent write
+  // routes re-check this flag after they write, so a request that
+  // authenticated just before deletion removes its own record instead of
+  // leaving an orphan. Marking is idempotent, so a retry after a partial
+  // failure is safe.
+  await User.updateOne({ _id: user._id }, { $set: { deleting: true } });
+
   // Remove dependent documents before the account so a partial failure leaves
   // the account (and a retry) intact.
   await Promise.all([

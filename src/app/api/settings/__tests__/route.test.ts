@@ -4,16 +4,22 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const mocks = vi.hoisted(() => ({
   connectDB: vi.fn(),
   requireUser: vi.fn(),
+  accountAcceptingWrites: vi.fn(),
   exists: vi.fn(),
   findOneAndUpdate: vi.fn(),
+  deleteOne: vi.fn(),
 }));
 
 vi.mock("@/lib/db", () => ({ connectDB: mocks.connectDB }));
 vi.mock("@/lib/auth", () => ({ requireUser: mocks.requireUser }));
+vi.mock("@/lib/account", () => ({
+  accountAcceptingWrites: mocks.accountAcceptingWrites,
+}));
 vi.mock("@/lib/models/settings", () => ({
   Settings: {
     exists: mocks.exists,
     findOneAndUpdate: mocks.findOneAndUpdate,
+    deleteOne: mocks.deleteOne,
   },
 }));
 
@@ -42,6 +48,7 @@ describe("POST /api/settings", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.requireUser.mockResolvedValue({ _id: "user-1" });
+    mocks.accountAcceptingWrites.mockResolvedValue(true);
     mocks.findOneAndUpdate.mockResolvedValue({ _id: "settings-1" });
   });
 
@@ -131,5 +138,18 @@ describe("POST /api/settings", () => {
 
     expect(mocks.exists).not.toHaveBeenCalled();
     expect(mocks.findOneAndUpdate).not.toHaveBeenCalled();
+  });
+
+  it("removes its settings when deletion started while the write was in flight", async () => {
+    mocks.findOneAndUpdate.mockResolvedValue({ _id: "settings-1" });
+    mocks.accountAcceptingWrites.mockResolvedValue(false);
+
+    const response = await POST(jsonRequest(allowedBody), undefined);
+    const body = (await response.json()) as { message: string };
+
+    expect(response.status).toBe(409);
+    expect(body.message).toMatch(/being deleted/i);
+    expect(mocks.accountAcceptingWrites).toHaveBeenCalledWith("user-1");
+    expect(mocks.deleteOne).toHaveBeenCalledWith({ user: "user-1" });
   });
 });

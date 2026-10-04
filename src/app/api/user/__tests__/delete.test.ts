@@ -6,6 +6,7 @@ const mocks = vi.hoisted(() => ({
   requireUser: vi.fn(),
   recipeDeleteMany: vi.fn(),
   settingsDeleteMany: vi.fn(),
+  updateOne: vi.fn(),
   findByIdAndDelete: vi.fn(),
   clearAuthCookie: vi.fn(),
 }));
@@ -22,7 +23,10 @@ vi.mock("@/lib/models/settings", () => ({
   Settings: { deleteMany: mocks.settingsDeleteMany },
 }));
 vi.mock("@/lib/models/user", () => ({
-  User: { findByIdAndDelete: mocks.findByIdAndDelete },
+  User: {
+    updateOne: mocks.updateOne,
+    findByIdAndDelete: mocks.findByIdAndDelete,
+  },
 }));
 
 import { ApiError } from "@/lib/api";
@@ -56,6 +60,15 @@ describe("DELETE /api/user", () => {
     const response = await DELETE(deleteRequest(), undefined);
 
     expect(response.status).toBe(200);
+    // The deletion mark is written before dependent cleanup so concurrent
+    // writes can detect it.
+    expect(mocks.updateOne).toHaveBeenCalledWith(
+      { _id: "user-1" },
+      { $set: { deleting: true } },
+    );
+    expect(mocks.updateOne.mock.invocationCallOrder[0]).toBeLessThan(
+      mocks.recipeDeleteMany.mock.invocationCallOrder[0],
+    );
     expect(mocks.recipeDeleteMany).toHaveBeenCalledWith({ author: "user-1" });
     expect(mocks.settingsDeleteMany).toHaveBeenCalledWith({ user: "user-1" });
     expect(mocks.findByIdAndDelete).toHaveBeenCalledWith("user-1");
@@ -69,6 +82,7 @@ describe("DELETE /api/user", () => {
     const response = await DELETE(deleteRequest(), undefined);
 
     expect(response.status).toBe(500);
+    expect(mocks.updateOne).toHaveBeenCalled();
     expect(mocks.findByIdAndDelete).not.toHaveBeenCalled();
     expect(mocks.clearAuthCookie).not.toHaveBeenCalled();
   });

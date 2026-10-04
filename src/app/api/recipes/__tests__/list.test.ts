@@ -12,6 +12,9 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock("@/lib/db", () => ({ connectDB: mocks.connectDB }));
 vi.mock("@/lib/auth", () => ({ requireUser: mocks.requireUser }));
+vi.mock("@/lib/account", () => ({
+  accountAcceptingWrites: vi.fn().mockResolvedValue(true),
+}));
 vi.mock("@/lib/models/recipe", () => ({
   Recipe: { find: mocks.find, countDocuments: mocks.countDocuments },
 }));

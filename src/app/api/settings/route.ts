@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { accountAcceptingWrites } from "@/lib/account";
 import { ApiError, apiHandler } from "@/lib/api";
 import { requireUser } from "@/lib/auth";
 import { connectDB } from "@/lib/db";
@@ -48,5 +49,14 @@ export const POST = apiHandler(async (request) => {
       setDefaultsOnInsert: true,
     },
   );
+
+  // A deletion that started after this request authenticated either removed
+  // the settings document above or is detected here; compensate so a
+  // successfully deleted account never leaves an orphan.
+  if (!(await accountAcceptingWrites(user._id))) {
+    await Settings.deleteOne({ user: user._id });
+    throw new ApiError(409, "This account is being deleted.");
+  }
+
   return NextResponse.json(settings);
 });

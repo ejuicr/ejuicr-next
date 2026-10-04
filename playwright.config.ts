@@ -12,7 +12,7 @@ export default defineConfig({
     baseURL: `http://localhost:${PORT}`,
     trace: "on-first-retry",
   },
-  projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
+  projects: [{ name: "firefox", use: { ...devices["Desktop Firefox"] } }],
   webServer: {
     command: `npm run start -- -p ${PORT}`,
     url: `http://localhost:${PORT}`,

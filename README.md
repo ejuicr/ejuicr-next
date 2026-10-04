@@ -90,7 +90,7 @@ otherwise Twitter sign-in cannot create an account.
 | `npm test`          | Run the test suite once.                 |
 | `npm run test:watch`| Run tests in watch mode.                 |
 | `npm run test:e2e`  | Run the Playwright browser smoke suite.  |
-| `npm run test:e2e:install` | Install Chromium for the smoke suite. |
+| `npm run test:e2e:install` | Install Firefox for the smoke suite. |
 
 The browser smoke suite runs against a production build, so run
 `npm run build && npm run test:e2e` (and `npm run test:e2e:install` once).

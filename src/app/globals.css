@@ -274,6 +274,19 @@
     @apply flex justify-between px-2;
   }
 
+  /* Left-aligned form rows used by the My Account password forms. */
+  .form-row {
+    @apply mx-2 my-6 flex;
+  }
+
+  .form-row > div:first-child {
+    @apply grow pr-4;
+  }
+
+  .form-row .input-border {
+    @apply w-full;
+  }
+
   .row > div {
     width: fit-content;
   }

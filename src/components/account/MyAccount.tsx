@@ -297,33 +297,37 @@ export default function MyAccount() {
             <hr />
             {(isLoadingChangePassword && <Spinner />) || (
               <form onSubmit={onSubmitSetPassword}>
-                <div className="mx-auto mb-4 max-w-[320px]">
-                  <InputBorder className="block w-full">
-                    <input
-                      type="password"
-                      autoComplete="off"
-                      aria-label="New password"
-                      placeholder="Password"
-                      value={newPassword}
-                      onChange={(event) => setNewPassword(event.target.value)}
-                    />
-                  </InputBorder>
+                <div className="form-row">
+                  <div>
+                    <InputBorder className="block w-full">
+                      <input
+                        type="password"
+                        autoComplete="off"
+                        aria-label="New password"
+                        placeholder="Password"
+                        value={newPassword}
+                        onChange={(event) => setNewPassword(event.target.value)}
+                      />
+                    </InputBorder>
+                  </div>
                 </div>
-                <div className="mx-auto mb-4 max-w-[320px]">
-                  <InputBorder className="block w-full">
-                    <input
-                      type="password"
-                      autoComplete="off"
-                      aria-label="Confirm new password"
-                      placeholder="Confirm Password"
-                      value={newPasswordConfirm}
-                      onChange={(event) =>
-                        setNewPasswordConfirm(event.target.value)
-                      }
-                    />
-                  </InputBorder>
+                <div className="form-row">
+                  <div>
+                    <InputBorder className="block w-full">
+                      <input
+                        type="password"
+                        autoComplete="off"
+                        aria-label="Confirm new password"
+                        placeholder="Confirm Password"
+                        value={newPasswordConfirm}
+                        onChange={(event) =>
+                          setNewPasswordConfirm(event.target.value)
+                        }
+                      />
+                    </InputBorder>
+                  </div>
                 </div>
-                <div className="mx-auto w-fit">
+                <div className="form-row">
                   <button type="submit" className="text-base">
                     Set Password
                   </button>
@@ -339,44 +343,50 @@ export default function MyAccount() {
             <hr />
             {(isLoadingChangePassword && <Spinner />) || (
               <form onSubmit={onSubmitChangePassword}>
-                <div className="mx-auto mb-4 max-w-[320px]">
-                  <InputBorder className="block w-full">
-                    <input
-                      type="password"
-                      aria-label="Current password"
-                      placeholder="Current Password"
-                      value={password}
-                      onChange={(event) => setPassword(event.target.value)}
-                    />
-                  </InputBorder>
+                <div className="form-row">
+                  <div>
+                    <InputBorder className="block w-full">
+                      <input
+                        type="password"
+                        aria-label="Current password"
+                        placeholder="Current Password"
+                        value={password}
+                        onChange={(event) => setPassword(event.target.value)}
+                      />
+                    </InputBorder>
+                  </div>
                 </div>
-                <div className="mx-auto mb-4 max-w-[320px]">
-                  <InputBorder className="block w-full">
-                    <input
-                      type="password"
-                      autoComplete="off"
-                      aria-label="New password"
-                      placeholder="New Password"
-                      value={newPassword}
-                      onChange={(event) => setNewPassword(event.target.value)}
-                    />
-                  </InputBorder>
+                <div className="form-row">
+                  <div>
+                    <InputBorder className="block w-full">
+                      <input
+                        type="password"
+                        autoComplete="off"
+                        aria-label="New password"
+                        placeholder="New Password"
+                        value={newPassword}
+                        onChange={(event) => setNewPassword(event.target.value)}
+                      />
+                    </InputBorder>
+                  </div>
                 </div>
-                <div className="mx-auto mb-4 max-w-[320px]">
-                  <InputBorder className="block w-full">
-                    <input
-                      type="password"
-                      autoComplete="off"
-                      aria-label="Confirm new password"
-                      placeholder="Confirm New Password"
-                      value={newPasswordConfirm}
-                      onChange={(event) =>
-                        setNewPasswordConfirm(event.target.value)
-                      }
-                    />
-                  </InputBorder>
+                <div className="form-row">
+                  <div>
+                    <InputBorder className="block w-full">
+                      <input
+                        type="password"
+                        autoComplete="off"
+                        aria-label="Confirm new password"
+                        placeholder="Confirm New Password"
+                        value={newPasswordConfirm}
+                        onChange={(event) =>
+                          setNewPasswordConfirm(event.target.value)
+                        }
+                      />
+                    </InputBorder>
+                  </div>
                 </div>
-                <div className="mx-auto w-fit">
+                <div className="form-row">
                   <button type="submit" className="text-base">
                     Change Password
                   </button>

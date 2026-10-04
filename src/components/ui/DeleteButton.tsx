@@ -21,7 +21,7 @@ export default function DeleteButton({
       title={label}
       aria-label={label}
       onClick={() => handler(index)}
-      className="h-[35px] w-[35px] bg-brand-red p-0 hover:bg-brand-red active:bg-brand-red"
+      className="h-[35px] w-[35px] bg-brand-red bg-none p-0 hover:bg-brand-red active:bg-brand-red"
     >
       <FontAwesomeIcon icon={faTrash} className="text-[18px]" />
     </button>

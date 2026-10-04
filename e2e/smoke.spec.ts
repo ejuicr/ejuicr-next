@@ -118,6 +118,32 @@ test.describe("layout and accessibility", () => {
       Math.abs(rowBox.x + rowBox.width - 8 - (cellBox.x + cellBox.width)),
     ).toBeLessThan(1);
 
+    // Delete is red in its static state (no gradient background image).
+    const deleteStyle = await page
+      .getByTestId("flavor1DeleteBtn")
+      .evaluate((element) => {
+        const style = getComputedStyle(element);
+        return {
+          background: style.backgroundColor,
+          image: style.backgroundImage,
+        };
+      });
+    expect(deleteStyle.background).toBe("rgb(255, 85, 85)");
+    expect(deleteStyle.image).toBe("none");
+
+    // Buttons and the bordered inputs are 35px tall.
+    const addFlavorHeight = await page
+      .getByRole("button", { name: "Add Flavor" })
+      .evaluate((element) => element.getBoundingClientRect().height);
+    expect(addFlavorHeight).toBeCloseTo(35, 0);
+    for (const testId of ["targetPgInput", "flavor1NameInput"]) {
+      const wrapperHeight = await page
+        .getByTestId(testId)
+        .locator("xpath=..")
+        .evaluate((element) => element.getBoundingClientRect().height);
+      expect(wrapperHeight).toBeCloseTo(35, 0);
+    }
+
     // The nicotine config panel rule has no vertical margin.
     await page.getByTestId("nicConfigBtn").click();
     const marginTop = await page

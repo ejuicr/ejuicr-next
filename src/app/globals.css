@@ -106,6 +106,8 @@
 
   button {
     @apply cursor-pointer rounded-[2px] border-none px-3 py-2 font-bold text-ink;
+    height: 35px;
+    line-height: 1;
     background: linear-gradient(135deg, #bd93f9, #8be9fd);
   }
 
@@ -162,7 +164,9 @@
 
 @layer components {
   .btn {
-    @apply inline-block cursor-pointer rounded-[2px] border-none px-3 py-2 font-bold text-ink;
+    @apply inline-flex cursor-pointer items-center justify-center rounded-[2px] border-none px-3 py-2 font-bold text-ink;
+    height: 35px;
+    line-height: 1;
     background: linear-gradient(135deg, #bd93f9, #8be9fd);
   }
 
@@ -208,6 +212,8 @@
 
   .btn-link {
     @apply text-brand-cyan;
+    height: auto;
+    line-height: inherit;
   }
 
   .btn-link:hover,

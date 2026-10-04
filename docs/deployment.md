@@ -204,9 +204,15 @@ runs on a schedule by itself.
 ### Weekly backup
 
 Requires the MongoDB Database Tools (`mongodump`) locally and cluster access.
-The existing database user has `readWrite` on the ejuicr databases, which is
-sufficient. Export production and staging separately, substituting the
-cluster host and credentials from `MONGODB_URI`:
+On Arch, install the AUR package `mongodb-tools`, or unpack the official
+Linux tarball from <https://www.mongodb.com/try/download/database-tools> and
+put its `bin` directory on `PATH`.
+
+The current database user has `readWriteAnyDatabase`, so it can create the
+temporary restore database below. If that user is narrowed to the three
+ejuicr databases, grant it access to the check database or restore into a
+local MongoDB instead. Export production and staging separately,
+substituting the cluster host and credentials from `MONGODB_URI`:
 
 ```sh
 mkdir -p ~/backups/ejuicr

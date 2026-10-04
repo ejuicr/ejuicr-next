@@ -526,13 +526,13 @@ function LinkedAccount({
     <div className="flex first:pb-6 min-[500px]:w-1/2 min-[500px]:first:pr-6 min-[500px]:first:pb-0">
       <div className="mr-5 mt-4 h-12 w-12 shrink-0">{logo}</div>
       <div>
-        <p className="m-0 text-cream">{name}</p>
-        <p className="m-0 text-[0.8rem]">Data Shared:</p>
+        <p className="m-0 font-bold text-cream">{name}</p>
+        <p className="m-0 text-[0.8rem] font-bold">Data Shared:</p>
         <p className="m-0 text-[0.8rem]">{shared}</p>
         <p className="m-0 text-[0.8rem]">
           <Button
             variant="link"
-            className="pt-1 text-brand-red"
+            className="pt-1 font-bold text-brand-red"
             onClick={onRemove}
           >
             Remove

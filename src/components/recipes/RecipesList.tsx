@@ -94,7 +94,13 @@ export default function RecipesList() {
                   className="text-[0.9rem] text-secondary"
                   onClick={handleSortByTitle}
                 >
-                  Title {isSortByTitle && <FontAwesomeIcon icon={faSortDown} />}
+                  Title{" "}
+                  {isSortByTitle && (
+                    <FontAwesomeIcon
+                      icon={faSortDown}
+                      className="ml-2 -translate-y-0.5"
+                    />
+                  )}
                 </Button>
               </div>
               <div className="text-right text-[0.9rem] text-secondary">
@@ -104,7 +110,12 @@ export default function RecipesList() {
                   onClick={handleSortByDate}
                 >
                   Last Updated{" "}
-                  {!isSortByTitle && <FontAwesomeIcon icon={faSortDown} />}
+                  {!isSortByTitle && (
+                    <FontAwesomeIcon
+                      icon={faSortDown}
+                      className="ml-2 -translate-y-0.5"
+                    />
+                  )}
                 </Button>
               </div>
               <div className="w-[calc(35px+1em)]" />

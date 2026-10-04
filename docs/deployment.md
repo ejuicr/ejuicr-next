@@ -211,18 +211,23 @@ put its `bin` directory on `PATH`.
 The current database user has `readWriteAnyDatabase`, so it can create the
 temporary restore database below. If that user is narrowed to the three
 ejuicr databases, grant it access to the check database or restore into a
-local MongoDB instead. Export production and staging separately,
-substituting the cluster host and credentials from `MONGODB_URI`:
+local MongoDB instead.
+
+`.env.local` uses dotenv syntax, not shell syntax, and can contain characters
+that break `source`. Extract the production URI with Node instead:
 
 ```sh
+PROD_URI=$(node --env-file=.env.local -e \
+  "console.log(process.env.MONGODB_URI.replace('/ejuicr-development','/ejuicr-production'))")
 mkdir -p ~/backups/ejuicr
-mongodump \
-  --uri="mongodb+srv://<user>:<password>@<cluster>/ejuicr-production" \
-  --gzip --archive="$HOME/backups/ejuicr/ejuicr-production-$(date +%F).archive.gz"
-mongodump \
-  --uri="mongodb+srv://<user>:<password>@<cluster>/ejuicr-staging" \
-  --gzip --archive="$HOME/backups/ejuicr/ejuicr-staging-$(date +%F).archive.gz"
+STAMP=$(date +%F)
+mongodump --uri="$PROD_URI" --gzip \
+  --archive="$HOME/backups/ejuicr/ejuicr-production-$STAMP.archive.gz"
 ```
+
+Export staging the same way by replacing the database name. If the URI is
+not based on `ejuicr-development`, substitute the cluster host and
+credentials from `MONGODB_URI` manually.
 
 ### Restore check (quarterly, or after changing this procedure)
 
@@ -230,16 +235,26 @@ Restore the latest production archive into an isolated temporary database on
 the same cluster, verify it, then drop the temporary database:
 
 ```sh
-mongorestore \
-  --uri="mongodb+srv://<user>:<password>@<cluster>/" \
-  --gzip --archive="$HOME/backups/ejuicr/ejuicr-production-YYYY-MM-DD.archive.gz" \
+mongorestore --uri="$PROD_URI" --gzip \
+  --archive="$HOME/backups/ejuicr/ejuicr-production-$STAMP.archive.gz" \
   --nsFrom="ejuicr-production.*" \
-  --nsTo="ejuicr-restore-check-YYYY-MM-DD.*"
+  --nsTo="ejuicr-restore-check-$STAMP.*"
 node --env-file=.env.local scripts/inspect-duplicates.mjs \
-  --database ejuicr-restore-check-YYYY-MM-DD
+  --database "ejuicr-restore-check-$STAMP"
 ```
 
-Drop `ejuicr-restore-check-YYYY-MM-DD` afterwards (Atlas UI or `mongosh`).
+Drop `ejuicr-restore-check-$STAMP` afterwards, either in the Atlas UI or
+without installing `mongosh`:
+
+```sh
+node --env-file=.env.local --input-type=module -e "
+import mongoose from 'mongoose';
+await mongoose.connect(process.env.MONGODB_URI.replace('/ejuicr-development', '/ejuicr-restore-check-$STAMP'));
+await mongoose.connection.dropDatabase();
+await mongoose.disconnect();
+"
+```
+
 The check is successful when the restore completes, the audit runs against
 the restored database, and the document counts look plausible. Record it
 below; the table must contain real checks, not planned dates.

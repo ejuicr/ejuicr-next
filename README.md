@@ -164,6 +164,23 @@ Session cookies are marked `Secure` in production, so sign-in will not work
 over plain HTTP. `PORT` can be set to change the listening port (default
 3000).
 
+## Security
+
+Check the dependencies that actually ship to production with:
+
+```
+npm audit --omit=dev
+```
+
+At the time of the rebuild this reports no vulnerabilities. A full
+`npm audit` may report advisories in the dev-only ESLint toolchain (for
+example the `braces` stack-exhaustion advisory,
+GHSA-vfj7-8cjw-p6xm) that do not yet have a patched release. These
+packages are never loaded at runtime, and any future `3.x` patch will be
+picked up automatically by `npm update` or a fresh `npm install`. Do not
+run `npm audit fix --force`: it downgrades `eslint-config-next` to a
+version that is incompatible with Next.js 16.
+
 ## Notes on the rebuild
 
 - Sessions are now stored in an `httpOnly` cookie instead of `localStorage`,

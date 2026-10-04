@@ -137,6 +137,19 @@
     @apply rounded-[3px] border-none bg-ink text-base text-cream outline-none;
   }
 
+  /* Focus is communicated by the input-border gradient and button states, so
+     the browser focus outline is suppressed. */
+  input:focus,
+  input:focus-visible,
+  button:focus,
+  button:focus-visible {
+    outline: none;
+  }
+
+  button::-moz-focus-inner {
+    border: 0;
+  }
+
   input[type="text"],
   input[type="email"],
   input[type="password"] {

@@ -88,6 +88,41 @@ test.describe("layout and accessibility", () => {
     });
   });
 
+  test("centers the header logo and suppresses focus outlines", async ({
+    page,
+  }) => {
+    await page.goto("/");
+
+    const headerMetrics = await page
+      .locator("#page-header")
+      .evaluate((header) => {
+        const headerRect = header.getBoundingClientRect();
+        const image = header.querySelector("img")!;
+        const imageRect = image.getBoundingClientRect();
+        return {
+          top: Math.round(imageRect.top - headerRect.top),
+          bottom: Math.round(headerRect.bottom - imageRect.bottom),
+        };
+      });
+    expect(headerMetrics.top).toBe(headerMetrics.bottom);
+
+    const buttonOutline = await page
+      .getByRole("button", { name: "Open menu" })
+      .evaluate((element) => {
+        (element as HTMLElement).focus();
+        return getComputedStyle(element).outlineStyle;
+      });
+    expect(buttonOutline).toBe("none");
+
+    const inputOutline = await page
+      .getByTestId("targetAmountInput")
+      .evaluate((element) => {
+        (element as HTMLInputElement).focus();
+        return getComputedStyle(element).outlineStyle;
+      });
+    expect(inputOutline).toBe("none");
+  });
+
   test("keeps the closed sidebar inert and restores focus after Escape", async ({
     page,
   }) => {

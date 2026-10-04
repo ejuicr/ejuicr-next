@@ -71,7 +71,7 @@ export default function Flavor({
       >
         {resultCells()}
       </div>
-      <div className="row flavor grid grid-cols-[4fr_1fr_2fr] items-center gap-2">
+      <div className="row flavor grid grid-cols-[4fr_1fr_2fr] items-center gap-2 justify-items-end [&>div:first-child]:justify-self-start">
         <div className="flex">
           <ConfigButton
             testId={`flavor${index + 1}ConfigBtn`}
@@ -107,7 +107,7 @@ export default function Flavor({
           </InputBorder>
           <span className="label-right">%</span>
         </div>
-        <div className="flex items-center justify-end">
+        <div className="flex min-[600px]:w-[calc(100%-1em)] min-[700px]:w-[calc(100%-2em)] items-center">
           <NumberControls
             incrementTestId={`flavor${index + 1}PercentIncBtn`}
             decrementTestId={`flavor${index + 1}PercentDecBtn`}
@@ -117,12 +117,14 @@ export default function Flavor({
             min={0}
             onChange={(value) => handleChangeFlavorPercentage(index, value)}
           />
-          <DeleteButton
-            testId={`flavor${index + 1}DeleteBtn`}
-            index={index}
-            handler={handleRemoveFlavor}
-            label={`Delete flavor ${index + 1}`}
-          />
+          <span className="ml-4 min-[600px]:ml-auto">
+            <DeleteButton
+              testId={`flavor${index + 1}DeleteBtn`}
+              index={index}
+              handler={handleRemoveFlavor}
+              label={`Delete flavor ${index + 1}`}
+            />
+          </span>
         </div>
       </div>
       {flavorConfigOpen && (

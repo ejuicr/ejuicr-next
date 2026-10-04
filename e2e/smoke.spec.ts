@@ -86,6 +86,47 @@ test.describe("layout and accessibility", () => {
     expect(listStyle).toBe("decimal");
   });
 
+  test("keeps flavor-row spacing and input borders matching the design", async ({
+    page,
+  }) => {
+    await page.goto("/");
+
+    // Gradient borders are symmetric around the input.
+    const border = await page
+      .getByTestId("flavor1NameInput")
+      .locator("xpath=..")
+      .evaluate((element) => {
+        const input = element.querySelector("input");
+        if (!input) throw new Error("input missing");
+        const wrapperRect = element.getBoundingClientRect();
+        const inputRect = input.getBoundingClientRect();
+        return {
+          top: inputRect.top - wrapperRect.top,
+          bottom: wrapperRect.bottom - inputRect.bottom,
+          height: wrapperRect.height,
+        };
+      });
+    expect(Math.abs(border.top - border.bottom)).toBeLessThan(0.5);
+    expect(border.height).toBeCloseTo(35, 0);
+
+    // The controls cell is right-aligned in its track, delete at the edge.
+    const row = page.locator(".row.flavor").first();
+    const rowBox = await row.boundingBox();
+    const cellBox = await row.locator(":scope > div").last().boundingBox();
+    if (!rowBox || !cellBox) throw new Error("flavor row missing");
+    expect(
+      Math.abs(rowBox.x + rowBox.width - 8 - (cellBox.x + cellBox.width)),
+    ).toBeLessThan(1);
+
+    // The nicotine config panel rule has no vertical margin.
+    await page.getByTestId("nicConfigBtn").click();
+    const marginTop = await page
+      .locator(".config-wrapper > hr")
+      .first()
+      .evaluate((element) => getComputedStyle(element).marginTop);
+    expect(marginTop).toBe("0px");
+  });
+
   test("keeps the footer at the bottom on short pages", async ({ page }) => {
     await page.goto("/no-such-page");
 

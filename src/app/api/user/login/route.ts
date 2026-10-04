@@ -4,18 +4,25 @@ import { ApiError, apiHandler } from "@/lib/api";
 import { findUserByEmail, setAuthCookie, signToken } from "@/lib/auth";
 import { connectDB } from "@/lib/db";
 import { capitalizeFirstLetter } from "@/lib/helpers";
+import { enforceRateLimit, getClientIp } from "@/lib/rate-limit";
 import { requireEmail, requireNonEmptyString } from "@/lib/validation";
+
+const LOGIN_IP_RULE = { limit: 20, windowMs: 15 * 60 * 1000 };
+const LOGIN_EMAIL_RULE = { limit: 10, windowMs: 15 * 60 * 1000 };
 
 // @desc  Authenticate a user
 // @route POST /api/user/login
 // @access Public
 export const POST = apiHandler(async (request) => {
+  enforceRateLimit(`login:ip:${getClientIp(request)}`, LOGIN_IP_RULE);
+
   const body = (await request.json()) as {
     email?: unknown;
     password?: unknown;
   };
 
   const email = requireEmail(body?.email, "Please fill out all fields.");
+  enforceRateLimit(`login:email:${email.toLowerCase()}`, LOGIN_EMAIL_RULE);
   const password = requireNonEmptyString(
     body?.password,
     "Please fill out all fields.",

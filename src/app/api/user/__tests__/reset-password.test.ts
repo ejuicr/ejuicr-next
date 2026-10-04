@@ -20,6 +20,7 @@ vi.mock("@/lib/models/user", () => ({
 vi.mock("@/lib/url", () => ({ getAppUrl: () => "http://localhost" }));
 
 import { POST } from "../reset-password/route";
+import { clearRateLimits } from "@/lib/rate-limit";
 
 function jsonRequest(body: unknown): Request {
   return new Request("http://localhost/api/user/reset-password", {
@@ -32,6 +33,7 @@ function jsonRequest(body: unknown): Request {
 describe("POST /api/user/reset-password", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    clearRateLimits();
     process.env.JWT_SECRET = "test-secret";
   });
 
@@ -57,15 +59,19 @@ describe("POST /api/user/reset-password", () => {
     expect(mocks.findOne).not.toHaveBeenCalled();
   });
 
-  it("does not send a reset link for an unknown account", async () => {
+  it("returns a generic response for an unknown account without sending mail", async () => {
     mocks.findOne.mockResolvedValue(null);
 
     const response = await POST(
       jsonRequest({ email: "nobody@example.com" }),
       undefined,
     );
+    const body = (await response.json()) as { message: string };
 
-    expect(response.status).toBe(400);
+    expect(response.status).toBe(200);
+    expect(body.message).toBe(
+      "If an account exists for that email, a reset link has been sent.",
+    );
     expect(mocks.sendMail).not.toHaveBeenCalled();
     expect(mocks.updateOne).not.toHaveBeenCalled();
   });
@@ -81,8 +87,12 @@ describe("POST /api/user/reset-password", () => {
       jsonRequest({ email: "member@example.com" }),
       undefined,
     );
+    const body = (await response.json()) as { message: string };
 
     expect(response.status).toBe(200);
+    expect(body.message).toBe(
+      "If an account exists for that email, a reset link has been sent.",
+    );
     expect(mocks.sendMail).toHaveBeenCalledTimes(1);
 
     const mail = mocks.sendMail.mock.calls[0][0] as {
@@ -107,5 +117,24 @@ describe("POST /api/user/reset-password", () => {
       { _id: "user-1" },
       { passwordResetNonce: decoded.nonce },
     );
+  });
+
+  it("rate limits repeated reset requests for the same email", async () => {
+    mocks.findOne.mockResolvedValue(null);
+
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      const response = await POST(
+        jsonRequest({ email: "nobody@example.com" }),
+        undefined,
+      );
+      expect(response.status).toBe(200);
+    }
+
+    const limited = await POST(
+      jsonRequest({ email: "nobody@example.com" }),
+      undefined,
+    );
+
+    expect(limited.status).toBe(429);
   });
 });

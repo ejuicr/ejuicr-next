@@ -12,7 +12,11 @@ import { connectDB } from "@/lib/db";
 import { Recipe } from "@/lib/models/recipe";
 import { Settings } from "@/lib/models/settings";
 import { User } from "@/lib/models/user";
+import { enforceRateLimit, getClientIp } from "@/lib/rate-limit";
 import { requireEmail, requirePassword } from "@/lib/validation";
+
+const SIGNUP_IP_RULE = { limit: 10, windowMs: 15 * 60 * 1000 };
+const SIGNUP_EMAIL_RULE = { limit: 3, windowMs: 15 * 60 * 1000 };
 
 async function hashPassword(password: string): Promise<string> {
   const salt = await bcrypt.genSalt(10);
@@ -23,12 +27,15 @@ async function hashPassword(password: string): Promise<string> {
 // @route POST /api/user
 // @access Public
 export const POST = apiHandler(async (request) => {
+  enforceRateLimit(`signup:ip:${getClientIp(request)}`, SIGNUP_IP_RULE);
+
   const body = (await request.json()) as {
     email?: unknown;
     password?: unknown;
   };
 
   const email = requireEmail(body?.email, "Email or password is missing.");
+  enforceRateLimit(`signup:email:${email.toLowerCase()}`, SIGNUP_EMAIL_RULE);
   const password = requirePassword(body?.password);
 
   await connectDB();

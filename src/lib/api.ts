@@ -6,6 +6,7 @@ export class ApiError extends Error {
   constructor(
     public status: number,
     message: string,
+    public headers?: HeadersInit,
   ) {
     super(message);
     this.name = "ApiError";
@@ -15,7 +16,10 @@ export class ApiError extends Error {
 /** Convert any thrown error into a JSON response. */
 export function handleApiError(error: unknown): NextResponse {
   if (error instanceof ApiError) {
-    return NextResponse.json({ message: error.message }, { status: error.status });
+    return NextResponse.json(
+      { message: error.message },
+      { status: error.status, headers: error.headers },
+    );
   }
 
   // request.json() throws SyntaxError for malformed bodies.

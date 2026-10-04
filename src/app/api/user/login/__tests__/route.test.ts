@@ -17,6 +17,7 @@ vi.mock("@/lib/auth", () => ({
 }));
 
 import { POST } from "../route";
+import { clearRateLimits } from "@/lib/rate-limit";
 
 function jsonRequest(body: unknown): Request {
   return new Request("http://localhost/api/user/login", {
@@ -29,6 +30,7 @@ function jsonRequest(body: unknown): Request {
 describe("POST /api/user/login", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    clearRateLimits();
     mocks.signToken.mockReturnValue("signed-token");
   });
 
@@ -134,5 +136,28 @@ describe("POST /api/user/login", () => {
     expect(response.status).toBe(400);
     expect(body.message).toBe("Email is invalid.");
     expect(mocks.findUserByEmail).not.toHaveBeenCalled();
+  });
+
+  it("rate limits repeated attempts for the same account", async () => {
+    mocks.findUserByEmail.mockResolvedValue(null);
+
+    for (let attempt = 0; attempt < 10; attempt += 1) {
+      const response = await POST(
+        jsonRequest({ email: "nobody@example.com", password: "whatever" }),
+        undefined,
+      );
+      expect(response.status).toBe(400);
+    }
+
+    const limited = await POST(
+      jsonRequest({ email: "nobody@example.com", password: "whatever" }),
+      undefined,
+    );
+
+    expect(limited.status).toBe(429);
+    expect(limited.headers.get("Retry-After")).toBeTruthy();
+    await expect(limited.json()).resolves.toEqual({
+      message: "Too many attempts. Please try again later.",
+    });
   });
 });

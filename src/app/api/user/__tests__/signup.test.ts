@@ -29,6 +29,7 @@ vi.mock("@/lib/models/user", () => ({
 }));
 
 import { POST } from "../route";
+import { clearRateLimits } from "@/lib/rate-limit";
 
 function jsonRequest(body: unknown): Request {
   return new Request("http://localhost/api/user", {
@@ -41,6 +42,7 @@ function jsonRequest(body: unknown): Request {
 describe("POST /api/user (signup)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    clearRateLimits();
     mocks.signToken.mockReturnValue("signed-token");
   });
 
@@ -181,5 +183,35 @@ describe("POST /api/user (signup)", () => {
     );
 
     expect(response.status).toBe(409);
+  });
+
+  it("rate limits repeated signup attempts for the same email", async () => {
+    mocks.findUserByEmail.mockResolvedValue({
+      _id: { toString: () => "existing" },
+      email: "oauth@example.com",
+      password: undefined,
+    });
+
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      const response = await POST(
+        jsonRequest({
+          email: "oauth@example.com",
+          password: "secret-password",
+        }),
+        undefined,
+      );
+      expect(response.status).toBe(400);
+    }
+
+    const limited = await POST(
+      jsonRequest({
+        email: "oauth@example.com",
+        password: "secret-password",
+      }),
+      undefined,
+    );
+
+    expect(limited.status).toBe(429);
+    expect(limited.headers.get("Retry-After")).toBeTruthy();
   });
 });

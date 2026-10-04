@@ -118,7 +118,6 @@ export default function RecipesList() {
                   )}
                 </Button>
               </div>
-              <div className="w-[calc(35px+1em)]" />
             </div>
             <ul className="m-0 list-none p-0">
               {recipes.map((recipe, index) => (

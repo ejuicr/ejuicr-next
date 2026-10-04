@@ -179,10 +179,10 @@ node --env-file=.env.local scripts/inspect-duplicates.mjs --database ejuicr-prod
 ```
 
 It also accepts `--database ejuicr-staging`. The audit covers recipe titles,
-settings documents, and duplicate Google/Twitter provider IDs. Before adding
-unique partial indexes on `googleId`/`twitterId`, it must report zero
-duplicate provider IDs in staging and production; note that unlinked accounts
-store an empty string, so any index must exclude empty and missing values.
+settings documents, and duplicate Google/Twitter provider IDs. Unique partial
+indexes on `googleId`/`twitterId` (excluding empty and missing values) are in
+the schema and are built by Mongoose on the first connection; run this audit
+against any restored or migrated data before expecting the indexes to build.
 
 ## Backup and restore
 

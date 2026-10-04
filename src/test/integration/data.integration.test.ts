@@ -282,3 +282,40 @@ describe("Twitter identity resolution (database-backed)", () => {
     expect(mocks.setAuthCookie).toHaveBeenCalledTimes(1);
   });
 });
+
+describe("provider identity constraints (database-backed)", () => {
+  beforeEach(async () => {
+    await User.deleteMany({});
+  });
+
+  it("rejects a second account with the same non-empty provider ID", async () => {
+    await User.create({ email: "google-1@example.com", googleId: "google-1" });
+    await expect(
+      User.create({ email: "google-2@example.com", googleId: "google-1" }),
+    ).rejects.toMatchObject({ code: 11000 });
+
+    await User.create({
+      email: "twitter-1@example.com",
+      twitterId: "twitter-1",
+    });
+    await expect(
+      User.create({ email: "twitter-2@example.com", twitterId: "twitter-1" }),
+    ).rejects.toMatchObject({ code: 11000 });
+  });
+
+  it("allows any number of unlinked accounts with empty provider IDs", async () => {
+    await User.create({
+      email: "empty-a@example.com",
+      googleId: "",
+      twitterId: "",
+    });
+    await User.create({
+      email: "empty-b@example.com",
+      googleId: "",
+      twitterId: "",
+    });
+    await User.create({ email: "missing@example.com" });
+
+    expect(await User.countDocuments({})).toBe(3);
+  });
+});

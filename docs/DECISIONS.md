@@ -89,12 +89,12 @@ sign-in method (password or the other provider) to remain.
 **Consequences:** Unverified provider emails are refused with
 `authError=google-email-unverified`; simultaneous unlink requests cannot leave
 an account without a sign-in method; a Twitter identity is never silently
-moved between accounts. Provider-ID fields are not yet uniquely indexed:
-adding a unique partial index requires inspecting existing data with
-`scripts/inspect-duplicates.mjs` first (it reports duplicate non-empty
-`googleId`/`twitterId` values), and the index must exclude the empty strings
-written during unlinking. Until then, deterministic resolution and the atomic
-claim are the application-level protection.
+moved between accounts. Unique partial indexes on `googleId` and `twitterId`
+enforce one account per non-empty provider ID while leaving unlinked accounts
+(empty or missing values) unconstrained. Staging and production were audited
+clean with `scripts/inspect-duplicates.mjs` on 2026-10-05 before the indexes
+were added; the audit remains the pre-rollout check for restored or migrated
+data.
 
 ## ADR-005 — Password length limited to bcrypt's 72-byte boundary
 

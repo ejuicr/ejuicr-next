@@ -75,5 +75,27 @@ export type User = InferSchemaType<typeof userSchema> & {
   updatedAt: Date;
 };
 
+// One account per established provider identity. Unlinking writes an empty
+// string and older documents may omit the field entirely, so each index only
+// covers non-empty IDs; unlinked accounts stay unconstrained. Staging and
+// production were audited clean with scripts/inspect-duplicates.mjs on
+// 2026-10-05 before these indexes were added.
+userSchema.index(
+  { googleId: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { googleId: { $gt: "" } },
+    name: "googleId_unique",
+  },
+);
+userSchema.index(
+  { twitterId: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { twitterId: { $gt: "" } },
+    name: "twitterId_unique",
+  },
+);
+
 export const User: Model<User> =
   (models.User as Model<User> | undefined) ?? model<User>("User", userSchema);

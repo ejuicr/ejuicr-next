@@ -5,20 +5,21 @@ import type { PublicUser } from "@/types";
 
 export default function UserProfile({ user }: { user: PublicUser }) {
   const authProvider = user.authProvider || null;
-  const profilePicAltText = `your ${authProvider} profile picture`;
-  const profilePicSrc =
-    (authProvider === "google" && user.googlePicture) ||
-    (authProvider === "twitter" && user.twitterPicture) ||
-    "#";
+  const profilePic = user.googlePicture || user.twitterPicture || null;
+  const profilePicAltText = user.googlePicture
+    ? "your Google profile picture"
+    : user.twitterPicture
+      ? "your Twitter profile picture"
+      : "your profile picture";
 
   return (
     <div className="mb-6 text-slateblue">
       <p className="mb-2 text-[0.9rem]">You are signed in as:</p>
-      {(user.googlePicture || user.twitterPicture) && (
+      {profilePic && (
         <div className="mx-auto mb-2 w-fit rounded-full bg-gradient-to-br from-brand-purple to-brand-cyan p-[3px] leading-none">
           {/* eslint-disable-next-line @next/next/no-img-element -- profile pictures can be remote URLs or data URLs */}
           <img
-            src={profilePicSrc}
+            src={profilePic}
             alt={profilePicAltText}
             referrerPolicy="no-referrer"
             className="h-auto max-w-16 rounded-full"

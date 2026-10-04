@@ -59,7 +59,12 @@ export default function Sidebar({
   }, [open]);
 
   const handleLogout = async () => {
-    await logout();
+    try {
+      await logout();
+    } catch (error) {
+      // Local state is already cleared; still leave the account UI.
+      console.error(error);
+    }
     handleClose();
     router.push("/");
     router.refresh();

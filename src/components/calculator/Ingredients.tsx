@@ -4,7 +4,7 @@ import { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPlus } from "@fortawesome/free-solid-svg-icons";
 import ConfigButton from "@/components/ui/ConfigButton";
-import { isResultsInvalid, roundToTwoDecimalPlaces } from "@/lib/helpers";
+import { formatMeasurement, isResultsInvalid, roundToTwoDecimalPlaces } from "@/lib/helpers";
 import Flavor from "./Flavor";
 import NicConfig from "./NicConfig";
 import type { CalculatorController } from "./useCalculator";
@@ -22,7 +22,7 @@ export default function Ingredients({
     pgRequired,
     vgRequired,
     flavors,
-    zeroNicotineMode,
+    showNicotine,
     units,
     handleAddFlavor,
   } = calculator;
@@ -63,7 +63,7 @@ export default function Ingredients({
         <>
           <div />
           <div>
-            <span>{`${weight}g`}</span>
+            <span>{`${formatMeasurement(weight)}g`}</span>
           </div>
         </>
       );
@@ -73,7 +73,7 @@ export default function Ingredients({
         <>
           <div />
           <div>
-            <span>{`${amount}mL`}</span>
+            <span>{`${formatMeasurement(amount)}mL`}</span>
           </div>
         </>
       );
@@ -81,10 +81,10 @@ export default function Ingredients({
     return (
       <>
         <div>
-          <span>{`${amount}mL`}</span>
+          <span>{`${formatMeasurement(amount)}mL`}</span>
         </div>
         <div>
-          <span>{`${weight}g`}</span>
+          <span>{`${formatMeasurement(weight)}g`}</span>
         </div>
       </>
     );
@@ -107,7 +107,7 @@ export default function Ingredients({
           <hr />
         </>
       )}
-      {!zeroNicotineMode && (
+      {showNicotine && (
         <>
           <div className={rowClass(isNicInvalid)}>
             <div className="flex items-center">
@@ -122,7 +122,7 @@ export default function Ingredients({
               </span>
             </div>
             <div>
-              <span>{`${nicResults.percentage}%`}</span>
+              <span>{`${roundToTwoDecimalPlaces(nicResults.percentage)}%`}</span>
             </div>
             {amountCells(nicResults.amount, nicResults.weight)}
           </div>

@@ -18,6 +18,28 @@ export function handleApiError(error: unknown): NextResponse {
     return NextResponse.json({ message: error.message }, { status: error.status });
   }
 
+  // request.json() throws SyntaxError for malformed bodies.
+  if (error instanceof SyntaxError) {
+    return NextResponse.json(
+      { message: "Invalid JSON body." },
+      { status: 400 },
+    );
+  }
+
+  // A duplicate-key failure can still happen when two requests race past an
+  // application-level uniqueness check.
+  if (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    (error as { code?: unknown }).code === 11000
+  ) {
+    return NextResponse.json(
+      { message: "That value already exists." },
+      { status: 409 },
+    );
+  }
+
   if (
     error instanceof mongoose.Error.ValidationError ||
     error instanceof mongoose.Error.CastError

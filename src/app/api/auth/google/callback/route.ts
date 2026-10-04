@@ -44,17 +44,27 @@ export const GET = apiHandler(async (request) => {
     );
     const profile = await fetchGoogleProfile(accessToken);
 
-    if (!profile.email) {
-      return NextResponse.redirect(`${appUrl}/?authError=google-email`);
-    }
-
     await connectDB();
 
-    const user = await User.findOne({
-      $or: [{ googleId: profile.sub }, { email: profile.email }],
-    });
+    // Established links are matched by Google's immutable subject ID first,
+    // so a linked account never depends on the provider email.
+    let user = await User.findOne({ googleId: profile.sub });
+    if (!user) {
+      if (!profile.email) {
+        return NextResponse.redirect(`${appUrl}/?authError=google-email`);
+      }
+      // An unverified provider email must not be attached to an existing
+      // account or used to key a new one.
+      if (!profile.emailVerified) {
+        return NextResponse.redirect(
+          `${appUrl}/?authError=google-email-unverified`,
+        );
+      }
+      user = await User.findOne({ email: profile.email });
+    }
 
     let userId: string;
+    let sessionVersion: number;
     if (!user) {
       const createdUser = await User.create({
         authProvider: "google",
@@ -64,6 +74,7 @@ export const GET = apiHandler(async (request) => {
         googlePicture: profile.picture ?? "",
       });
       userId = createdUser._id.toString();
+      sessionVersion = createdUser.sessionVersion ?? 0;
     } else {
       user.authProvider = "google";
       user.googleId = profile.sub;
@@ -71,9 +82,10 @@ export const GET = apiHandler(async (request) => {
       user.googlePicture = profile.picture ?? "";
       await user.save();
       userId = user._id.toString();
+      sessionVersion = user.sessionVersion ?? 0;
     }
 
-    await setAuthCookie(signToken({ _id: userId }));
+    await setAuthCookie(signToken({ _id: userId, sessionVersion }));
     return NextResponse.redirect(`${appUrl}/`);
   } catch (error) {
     console.error(error);

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   calculateWeight,
   capitalizeFirstLetter,
+  formatMeasurement,
   isResultsInvalid,
   parseNumberInput,
   roundToTwoDecimalPlaces,
@@ -18,6 +19,20 @@ describe("roundToTwoDecimalPlaces", () => {
     expect(roundToTwoDecimalPlaces(1.234)).toBe(1.23);
     expect(roundToTwoDecimalPlaces(1.235)).toBe(1.24);
     expect(roundToTwoDecimalPlaces(1.8)).toBe(1.8);
+  });
+});
+
+describe("formatMeasurement", () => {
+  it("rounds to two decimals for display", () => {
+    expect(formatMeasurement(1.234)).toBe("1.23");
+    expect(formatMeasurement(1.2)).toBe("1.2");
+    expect(formatMeasurement(0)).toBe("0");
+  });
+
+  it("marks positive amounts below display precision", () => {
+    expect(formatMeasurement(0.004)).toBe("<0.01");
+    expect(formatMeasurement(0.006)).toBe("0.01");
+    expect(formatMeasurement(-0.006)).toBe("-0.01");
   });
 });
 
@@ -92,10 +107,12 @@ describe("validateEmail", () => {
 });
 
 describe("validatePassword", () => {
-  it("enforces length limits", () => {
+  it("enforces the minimum length and bcrypt's 72-byte limit", () => {
     expect(validatePassword("12345")).toMatch(/too short/i);
-    expect(validatePassword("a".repeat(251))).toMatch(/too long/i);
     expect(validatePassword("secret")).toBe(true);
+    expect(validatePassword("a".repeat(72))).toBe(true);
+    expect(validatePassword("a".repeat(73))).toMatch(/too long/i);
+    expect(validatePassword("é".repeat(37))).toMatch(/too long/i);
   });
 });
 

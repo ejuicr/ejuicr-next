@@ -3,6 +3,7 @@ import { ApiError, apiHandler } from "@/lib/api";
 import { requireUser } from "@/lib/auth";
 import { connectDB } from "@/lib/db";
 import { Recipe } from "@/lib/models/recipe";
+import { parseRecipeInput } from "@/lib/validation";
 
 // @desc  Get all recipes for the current user
 // @route GET /api/recipes
@@ -19,10 +20,11 @@ export const GET = apiHandler(async () => {
 // @access Private
 export const POST = apiHandler(async (request) => {
   const user = await requireUser();
-  const body = (await request.json()) as { name?: string };
+  const body = await request.json();
+  const recipeInput = parseRecipeInput(body);
 
-  const title = body.name;
-  if (!title || !title.trim()) {
+  const title = recipeInput.name;
+  if (!title) {
     throw new ApiError(400, "Recipe title must not be blank.");
   }
 
@@ -40,6 +42,6 @@ export const POST = apiHandler(async (request) => {
     );
   }
 
-  const recipe = await Recipe.create({ ...body, author: user._id });
+  const recipe = await Recipe.create({ ...recipeInput, author: user._id });
   return NextResponse.json(recipe, { status: 201 });
 });

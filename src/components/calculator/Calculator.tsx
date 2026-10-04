@@ -18,6 +18,18 @@ export default function Calculator({ recipe }: { recipe?: Recipe }) {
             <hr className="mb-8" />
           </div>
         )}
+        {!recipe && calculator.hasSavedDefaults && (
+          <p className="my-2 text-right text-[0.9rem]">
+            <button
+              data-testid="applyDefaultsBtn"
+              type="button"
+              className="bg-transparent p-0 font-normal text-brand-cyan hover:bg-transparent hover:text-brand-pink active:bg-transparent active:text-brand-pink"
+              onClick={calculator.handleApplyDefaults}
+            >
+              Apply Saved Defaults
+            </button>
+          </p>
+        )}
         <TargetEjuice calculator={calculator} />
         <Ingredients calculator={calculator} />
       </div>

@@ -12,6 +12,7 @@ export interface GoogleCredentials {
 export interface GoogleProfile {
   sub: string;
   email?: string;
+  emailVerified: boolean;
   name?: string;
   picture?: string;
 }
@@ -79,5 +80,23 @@ export async function fetchGoogleProfile(
     throw new Error(`Failed to load Google profile (${response.status}).`);
   }
 
-  return (await response.json()) as GoogleProfile;
+  const data = (await response.json()) as {
+    sub?: string;
+    email?: string;
+    email_verified?: boolean;
+    name?: string;
+    picture?: string;
+  };
+
+  if (!data.sub) {
+    throw new Error("Google profile returned no subject identifier.");
+  }
+
+  return {
+    sub: data.sub,
+    email: data.email,
+    emailVerified: data.email_verified === true,
+    name: data.name,
+    picture: data.picture,
+  };
 }

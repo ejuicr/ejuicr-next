@@ -256,3 +256,43 @@ describe("Error message", () => {
     expect(getByTestId("errorMessage")).toBeInTheDocument();
   });
 });
+
+describe("Precision", () => {
+  it("rounds only for display and keeps the true nicotine percentage", () => {
+    render(app);
+    fireEvent.click(getByTestId("flavor1DeleteBtn"));
+    fireEvent.change(getByTestId("targetAmountInput"), {
+      target: { value: "0.1" },
+    });
+
+    // 6 mg/mL * 0.1 mL / 100 mg/mL = 0.006 mL. The displayed amount is
+    // rounded, but the percentage uses the exact amount: 6%, not 10%.
+    expect(getByText("6%")).toBeInTheDocument();
+    expect(getByText("0.01mL")).toBeInTheDocument();
+  });
+
+  it("marks positive amounts below display precision", () => {
+    render(app);
+    fireEvent.click(getByTestId("flavor1DeleteBtn"));
+    fireEvent.change(getByTestId("targetAmountInput"), {
+      target: { value: "0.05" },
+    });
+
+    expect(getByText("<0.01mL")).toBeInTheDocument();
+  });
+});
+
+describe("Saved draft", () => {
+  it("restores a valid empty flavor list", () => {
+    localStorage.setItem(
+      "calculator",
+      JSON.stringify({ targetNicStrength: 4, flavors: [] }),
+    );
+
+    render(app);
+
+    expect(getByTestId("targetNicStrengthInput")).toHaveValue(4);
+    expect(getByTestId("flavorAddBtn")).toBeInTheDocument();
+    expect(screen.queryByTestId("flavor1PercentInput")).not.toBeInTheDocument();
+  });
+});

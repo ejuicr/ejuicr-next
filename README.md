@@ -129,6 +129,7 @@ server, so existing data continues to work.
 | POST   | `/api/user/logout`              | Public  | Clear the session cookie.          |
 | GET    | `/api/user/me`                  | Private | Get the current user.              |
 | POST   | `/api/user/change-password`     | Private | Change the current password.       |
+| POST   | `/api/user/set-password`        | Private | Set a password for OAuth accounts. |
 | POST   | `/api/user/reset-password`      | Public  | Send a reset password email.       |
 | POST   | `/api/user/reset-password/:token` | Public | Set a new password with a token. |
 | DELETE | `/api/user`                     | Private | Delete the account and recipes.    |

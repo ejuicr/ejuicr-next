@@ -5,7 +5,7 @@ import ConfigButton from "@/components/ui/ConfigButton";
 import DeleteButton from "@/components/ui/DeleteButton";
 import InputBorder from "@/components/ui/InputBorder";
 import NumberControls from "@/components/ui/NumberControls";
-import { isResultsInvalid } from "@/lib/helpers";
+import { formatMeasurement, isResultsInvalid } from "@/lib/helpers";
 import FlavorConfig from "./FlavorConfig";
 import type { CalculatorController } from "./useCalculator";
 
@@ -35,7 +35,7 @@ export default function Flavor({
         <>
           <div />
           <div>
-            <span>{`${weight}g`}</span>
+            <span>{`${formatMeasurement(weight)}g`}</span>
           </div>
         </>
       );
@@ -45,7 +45,7 @@ export default function Flavor({
         <>
           <div />
           <div>
-            <span>{`${amount}mL`}</span>
+            <span>{`${formatMeasurement(amount)}mL`}</span>
           </div>
         </>
       );
@@ -53,10 +53,10 @@ export default function Flavor({
     return (
       <>
         <div>
-          <span>{`${amount}mL`}</span>
+          <span>{`${formatMeasurement(amount)}mL`}</span>
         </div>
         <div>
-          <span>{`${weight}g`}</span>
+          <span>{`${formatMeasurement(weight)}g`}</span>
         </div>
       </>
     );

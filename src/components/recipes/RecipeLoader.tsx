@@ -7,7 +7,15 @@ import Spinner from "@/components/ui/Spinner";
 import { api } from "@/lib/client-api";
 import type { Recipe } from "@/types";
 
+/**
+ * Loads a recipe. The request state is remounted when the ID changes so a
+ * previous recipe or error can never linger while another one loads.
+ */
 export default function RecipeLoader({ id }: { id: string }) {
+  return <RecipeRequest key={id} id={id} />;
+}
+
+function RecipeRequest({ id }: { id: string }) {
   const [recipe, setRecipe] = useState<Recipe | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");

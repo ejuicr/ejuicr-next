@@ -62,10 +62,14 @@ export default function AuthProvider({
       const currentUser = await api.get<PublicUser>("/api/user/me");
       setUser(currentUser);
     } catch (error) {
-      if (!(error instanceof ApiClientError) || error.status !== 401) {
-        console.error(error);
+      if (error instanceof ApiClientError && error.status === 401) {
+        // A missing session is a valid signed-out state.
+        setUser(null);
+        return;
       }
-      setUser(null);
+      // Transient failures must reach callers instead of looking signed out.
+      console.error(error);
+      throw error;
     } finally {
       setLoading(false);
     }
@@ -74,9 +78,8 @@ export default function AuthProvider({
   const logout = useCallback(async () => {
     try {
       await api.post("/api/user/logout");
-    } catch (error) {
-      console.error(error);
     } finally {
+      // Clear local state even when the server could not be reached.
       setUser(null);
     }
   }, []);

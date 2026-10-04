@@ -71,14 +71,20 @@ export default function MyAccount() {
     (user.hasGoogleLinked ? 1 : 0) + (user.hasTwitterLinked ? 1 : 0);
 
   const authProvider = user.authProvider || null;
-  const profilePicSrc =
-    (authProvider === "google" && user.googlePicture) ||
-    (authProvider === "twitter" && user.twitterPicture) ||
-    "#";
-  const profilePicAltText = `Your ${authProvider} profile picture`;
+  const profilePic = user.googlePicture || user.twitterPicture || null;
+  const profilePicAltText = user.googlePicture
+    ? "Your Google profile picture"
+    : user.twitterPicture
+      ? "Your Twitter profile picture"
+      : "Your profile picture";
 
   const handleLogout = async () => {
-    await logout();
+    try {
+      await logout();
+    } catch (error) {
+      // Local state is already cleared; still leave the account UI.
+      console.error(error);
+    }
     router.push("/");
     router.refresh();
   };
@@ -100,7 +106,7 @@ export default function MyAccount() {
 
     setIsLoadingChangePassword(true);
     try {
-      await api.post("/api/user", { email: user.email, password: newPassword });
+      await api.post("/api/user/set-password", { password: newPassword });
       setUser({ ...user, hasPassword: true });
       setSuccess("Your password has been set.");
       setNewPassword("");
@@ -202,11 +208,11 @@ export default function MyAccount() {
         {error && <ErrorMessage>{error}</ErrorMessage>}
         {success && <SuccessMessage>{success}</SuccessMessage>}
         <div className="mt-8 text-center">
-          {(user.googlePicture || user.twitterPicture) && (
+          {profilePic && (
             <div className="mx-auto my-6 w-fit rounded-full bg-gradient-to-br from-brand-purple to-brand-cyan p-[3px] leading-none">
               {/* eslint-disable-next-line @next/next/no-img-element -- profile pictures can be remote URLs or data URLs */}
               <img
-                src={profilePicSrc}
+                src={profilePic}
                 alt={profilePicAltText}
                 referrerPolicy="no-referrer"
                 className="h-auto max-w-24 rounded-full"

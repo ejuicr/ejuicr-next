@@ -63,6 +63,7 @@ export const GET = apiHandler(async (request) => {
     });
 
     let userId: string;
+    let sessionVersion: number;
     if (!user) {
       const createdUser = await User.create({
         authProvider: "twitter",
@@ -73,6 +74,7 @@ export const GET = apiHandler(async (request) => {
         twitterPicture: profile.picture ?? "",
       });
       userId = createdUser._id.toString();
+      sessionVersion = createdUser.sessionVersion ?? 0;
     } else {
       user.authProvider = "twitter";
       user.twitterId = profile.id;
@@ -81,9 +83,10 @@ export const GET = apiHandler(async (request) => {
       user.twitterPicture = profile.picture ?? "";
       await user.save();
       userId = user._id.toString();
+      sessionVersion = user.sessionVersion ?? 0;
     }
 
-    await setAuthCookie(signToken({ _id: userId }));
+    await setAuthCookie(signToken({ _id: userId, sessionVersion }));
     return NextResponse.redirect(`${appUrl}/`);
   } catch (error) {
     console.error(error);

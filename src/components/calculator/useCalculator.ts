@@ -58,14 +58,11 @@ function buildFlavors(
   targetAmount: number,
 ): FlavorState[] {
   return inputs.map((flavor) => {
-    const amount = roundToTwoDecimalPlaces(
-      (flavor.percentage / 100) * targetAmount,
-    );
-    const pgAmount = roundToTwoDecimalPlaces((flavor.pg / 100) * amount);
-    const vgAmount = roundToTwoDecimalPlaces((flavor.vg / 100) * amount);
-    const weight = roundToTwoDecimalPlaces(
-      calculateWeight(amount, flavor.pg, flavor.vg),
-    );
+    // Keep full precision internally; display formatting rounds later.
+    const amount = (flavor.percentage / 100) * targetAmount;
+    const pgAmount = (flavor.pg / 100) * amount;
+    const vgAmount = (flavor.vg / 100) * amount;
+    const weight = calculateWeight(amount, flavor.pg, flavor.vg);
     return { ...flavor, amount, pgAmount, vgAmount, weight };
   });
 }
@@ -79,6 +76,13 @@ function flavorsFromRecipe(recipe: Recipe): FlavorState[] {
       percentage: flavor.percentage,
     })),
     recipe.amount,
+  );
+}
+
+/** The settings endpoint returns `{}` until the user has saved defaults. */
+function hasSettings(value: unknown): value is SettingsData {
+  return (
+    typeof value === "object" && value !== null && "base" in value
   );
 }
 
@@ -117,8 +121,18 @@ export function useCalculator(recipe?: Recipe) {
   const [flavors, setFlavors] = useState<FlavorState[]>(() =>
     recipe ? flavorsFromRecipe(recipe) : createDefaultFlavors(),
   );
-  const [zeroNicotineMode, setZeroNicotineMode] = useState(false);
+  // A recipe with zero strength is a zero-nicotine recipe; otherwise the
+  // calculator starts with nicotine visible until settings say otherwise.
+  const [zeroNicotineMode, setZeroNicotineMode] = useState(() =>
+    recipe ? recipe.strength <= 0 : false,
+  );
   const [units, setUnits] = useState<SettingsData["units"]>("both");
+  const [hasSavedDefaults, setHasSavedDefaults] = useState(false);
+
+  // Tracks whether the current values came from an existing draft or from
+  // edits made before settings loaded; either outranks saved defaults.
+  const hasDraftRef = useRef(false);
+  const savedSettingsRef = useRef<SettingsData | null>(null);
 
   // Restore persisted calculator values on first mount. This has to run after
   // mount so the server-rendered defaults keep matching the first client
@@ -127,10 +141,12 @@ export function useCalculator(recipe?: Recipe) {
   useEffect(() => {
     if (recipe) return;
     try {
-      const saved = JSON.parse(
-        localStorage.getItem(CALCULATOR_STORAGE_KEY) ?? "null",
-      ) as Partial<CalculatorValues> | null;
-      if (!saved) return;
+      const raw = localStorage.getItem(CALCULATOR_STORAGE_KEY);
+      if (!raw) return;
+      const saved = JSON.parse(raw) as Partial<CalculatorValues> | null;
+      if (!saved || typeof saved !== "object") return;
+      // Any stored state is an existing draft and outranks user defaults.
+      hasDraftRef.current = true;
       if (typeof saved.targetPg === "number") setTargetPg(saved.targetPg);
       if (typeof saved.targetVg === "number") setTargetVg(saved.targetVg);
       if (typeof saved.targetNicStrength === "number")
@@ -138,14 +154,42 @@ export function useCalculator(recipe?: Recipe) {
       if (typeof saved.targetAmount === "number")
         setTargetAmount(saved.targetAmount);
       if (saved.nicConfig) setNicConfig(saved.nicConfig);
-      if (Array.isArray(saved.flavors) && saved.flavors.length > 0)
-        setFlavors(saved.flavors);
+      if (Array.isArray(saved.flavors)) setFlavors(saved.flavors);
     } catch (error) {
       console.error("Failed to restore calculator values.", error);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   /* eslint-enable react-hooks/set-state-in-effect */
+
+  // Apply saved defaults to the calculator. Used when a fresh calculator
+  // initializes and when the user deliberately applies defaults.
+  const applySettings = useCallback((settings: SettingsData) => {
+    setZeroNicotineMode(settings.zeroNicotineMode);
+    setUnits(settings.units);
+    setTargetPg(settings.base.pg);
+    setTargetVg(settings.base.vg);
+    setTargetNicStrength(settings.zeroNicotineMode ? 0 : settings.strength);
+    setTargetAmount(settings.amount);
+    setNicConfig({
+      strength: settings.nicotine.strength,
+      pg: settings.nicotine.base.pg,
+      vg: settings.nicotine.base.vg,
+    });
+    setFlavors(
+      buildFlavors(
+        [
+          {
+            name: "Flavor 1",
+            pg: settings.flavor.base.pg,
+            vg: settings.flavor.base.vg,
+            percentage: settings.flavor.percentage,
+          },
+        ],
+        settings.amount,
+      ),
+    );
+  }, []);
 
   // Load the signed-in user's saved settings.
   const settingsLoadedFor = useRef<string | null>(null);
@@ -156,39 +200,27 @@ export function useCalculator(recipe?: Recipe) {
     let cancelled = false;
     (async () => {
       try {
-        const settings = await api.get<SettingsData | Record<string, never>>(
-          "/api/settings",
-        );
-        if (cancelled || !("base" in settings)) return;
+        const settings = await api.get<unknown>("/api/settings");
+        if (cancelled || !hasSettings(settings)) return;
 
-        setZeroNicotineMode(settings.zeroNicotineMode);
+        savedSettingsRef.current = settings;
+        setHasSavedDefaults(true);
+
+        // Display preferences always apply.
         setUnits(settings.units);
 
-        // A recipe being viewed always takes precedence over defaults.
-        if (recipe) return;
+        if (recipe) {
+          // The recipe's own nicotine decides whether nicotine controls are
+          // shown; zero-nicotine defaults must never hide active nicotine.
+          setZeroNicotineMode(recipe.strength <= 0);
+          return;
+        }
 
-        setTargetPg(settings.base.pg);
-        setTargetVg(settings.base.vg);
-        setTargetNicStrength(settings.zeroNicotineMode ? 0 : settings.strength);
-        setTargetAmount(settings.amount);
-        setNicConfig({
-          strength: settings.nicotine.strength,
-          pg: settings.nicotine.base.pg,
-          vg: settings.nicotine.base.vg,
-        });
-        setFlavors(
-          buildFlavors(
-            [
-              {
-                name: "Flavor 1",
-                pg: settings.flavor.base.pg,
-                vg: settings.flavor.base.vg,
-                percentage: settings.flavor.percentage,
-              },
-            ],
-            settings.amount,
-          ),
-        );
+        // Initialization precedence: an existing draft, or edits made while
+        // settings were loading, outrank the user's defaults.
+        if (hasDraftRef.current) return;
+
+        applySettings(settings);
       } catch (error) {
         console.error(error);
       }
@@ -197,9 +229,10 @@ export function useCalculator(recipe?: Recipe) {
     return () => {
       cancelled = true;
     };
-  }, [user, recipe]);
+  }, [user, recipe, applySettings]);
 
   // Nicotine results are derived from the target values and nicotine base.
+  // Full precision is kept internally; display formatting rounds later.
   const nicResults = useMemo<NicResults>(() => {
     if (
       nicConfig.strength <= 0 ||
@@ -208,36 +241,28 @@ export function useCalculator(recipe?: Recipe) {
     ) {
       return EMPTY_NIC_RESULTS;
     }
-    const amount = roundToTwoDecimalPlaces(
-      (targetNicStrength * targetAmount) / nicConfig.strength,
-    );
-    const percentage = roundToTwoDecimalPlaces((amount / targetAmount) * 100);
-    const pg = roundToTwoDecimalPlaces((nicConfig.pg / 100) * amount);
-    const vg = roundToTwoDecimalPlaces((nicConfig.vg / 100) * amount);
-    const weight = roundToTwoDecimalPlaces(
-      calculateWeight(amount, nicConfig.pg, nicConfig.vg),
-    );
+    const amount = (targetNicStrength * targetAmount) / nicConfig.strength;
+    const percentage = (amount / targetAmount) * 100;
+    const pg = (nicConfig.pg / 100) * amount;
+    const vg = (nicConfig.vg / 100) * amount;
+    const weight = calculateWeight(amount, nicConfig.pg, nicConfig.vg);
     return { amount, percentage, pg, vg, weight };
   }, [nicConfig, targetNicStrength, targetAmount]);
 
   // The PG/VG that must be added to reach the target ratio.
   const pgRequired = useMemo(
     () =>
-      roundToTwoDecimalPlaces(
-        (targetPg / 100) * targetAmount -
-          nicResults.pg -
-          totalFlavorPg(flavors),
-      ),
+      (targetPg / 100) * targetAmount -
+      nicResults.pg -
+      totalFlavorPg(flavors),
     [targetPg, targetAmount, nicResults.pg, flavors],
   );
 
   const vgRequired = useMemo(
     () =>
-      roundToTwoDecimalPlaces(
-        (targetVg / 100) * targetAmount -
-          nicResults.vg -
-          totalFlavorVg(flavors),
-      ),
+      (targetVg / 100) * targetAmount -
+      nicResults.vg -
+      totalFlavorVg(flavors),
     [targetVg, targetAmount, nicResults.vg, flavors],
   );
 
@@ -271,6 +296,7 @@ export function useCalculator(recipe?: Recipe) {
 
   const handleChangeTargetPgVg = useCallback(
     (value: string | number, ingredient: "pg" | "vg" = "pg") => {
+      hasDraftRef.current = true;
       const validatedValue = validatePgVgValue(value);
       setTargetPg(ingredient === "vg" ? 100 - validatedValue : validatedValue);
       setTargetVg(ingredient === "vg" ? validatedValue : 100 - validatedValue);
@@ -280,12 +306,14 @@ export function useCalculator(recipe?: Recipe) {
 
   const handleChangeTargetNicStrength = useCallback(
     (value: string | number) => {
+      hasDraftRef.current = true;
       setTargetNicStrength(roundToTwoDecimalPlaces(parseNumberInput(value)));
     },
     [],
   );
 
   const handleChangeTargetAmount = useCallback((value: string | number) => {
+    hasDraftRef.current = true;
     const roundedValue = roundToTwoDecimalPlaces(parseNumberInput(value));
     setTargetAmount(roundedValue);
     setFlavors((current) => buildFlavors(current, roundedValue));
@@ -293,6 +321,7 @@ export function useCalculator(recipe?: Recipe) {
 
   const handleChangeNicConfigPgVg = useCallback(
     (value: string | number, ingredient: "pg" | "vg" = "pg") => {
+      hasDraftRef.current = true;
       const validatedValue = validatePgVgValue(value);
       setNicConfig((current) => ({
         ...current,
@@ -305,6 +334,7 @@ export function useCalculator(recipe?: Recipe) {
 
   const handleChangeNicConfigStrength = useCallback(
     (value: string | number) => {
+      hasDraftRef.current = true;
       const parsedValue = parseNumberInput(value);
       setNicConfig((current) => ({
         ...current,
@@ -315,6 +345,7 @@ export function useCalculator(recipe?: Recipe) {
   );
 
   const handleChangeFlavorName = useCallback((index: number, value: string) => {
+    hasDraftRef.current = true;
     setFlavors((current) =>
       current.map((flavor, flavorIndex) =>
         flavorIndex === index ? { ...flavor, name: value } : flavor,
@@ -324,6 +355,7 @@ export function useCalculator(recipe?: Recipe) {
 
   const handleChangeFlavorPercentage = useCallback(
     (index: number, value: string | number) => {
+      hasDraftRef.current = true;
       const roundedValue = roundToTwoDecimalPlaces(parseNumberInput(value));
       setFlavors((current) =>
         buildFlavors(
@@ -341,6 +373,7 @@ export function useCalculator(recipe?: Recipe) {
 
   const handleChangeFlavorPgVg = useCallback(
     (index: number, value: string | number, ingredient: "pg" | "vg" = "pg") => {
+      hasDraftRef.current = true;
       const validatedValue = validatePgVgValue(value);
       setFlavors((current) =>
         buildFlavors(
@@ -361,26 +394,39 @@ export function useCalculator(recipe?: Recipe) {
   );
 
   const handleRemoveFlavor = useCallback((index: number) => {
+    hasDraftRef.current = true;
     setFlavors((current) =>
       current.filter((_, flavorIndex) => flavorIndex !== index),
     );
   }, []);
 
   const handleAddFlavor = useCallback(() => {
-    setFlavors((current) => [
-      ...current,
-      {
+    hasDraftRef.current = true;
+    setFlavors((current) => {
+      // Saved flavor defaults apply to every newly added flavor. Guests and
+      // accounts without saved settings keep the neutral 100% PG / 0% base.
+      const defaults = savedSettingsRef.current?.flavor;
+      const flavor: FlavorInput = {
         name: `Flavor ${current.length + 1}`,
-        pg: 100,
-        vg: 0,
-        percentage: 0,
-        amount: 0,
-        pgAmount: 0,
-        vgAmount: 0,
-        weight: 0,
-      },
-    ]);
-  }, []);
+        pg: defaults?.base.pg ?? 100,
+        vg: defaults?.base.vg ?? 0,
+        percentage: defaults?.percentage ?? 0,
+      };
+      return [...current, buildFlavors([flavor], targetAmount)[0]];
+    });
+  }, [targetAmount]);
+
+  // Never hide nicotine that is active in the current calculation, for
+  // example a saved recipe opened while zero-nicotine defaults are enabled.
+  const showNicotine = !zeroNicotineMode || targetNicStrength > 0;
+
+  // Deliberate action for replacing the current draft with saved defaults;
+  // settings loading must never do this implicitly.
+  const handleApplyDefaults = useCallback(() => {
+    const settings = savedSettingsRef.current;
+    if (!settings) return;
+    applySettings(settings);
+  }, [applySettings]);
 
   return {
     targetPg,
@@ -392,9 +438,10 @@ export function useCalculator(recipe?: Recipe) {
     flavors,
     pgRequired,
     vgRequired,
-    zeroNicotineMode,
+    showNicotine,
+    hasSavedDefaults,
+    handleApplyDefaults,
     units,
-    setZeroNicotineMode,
     handleChangeTargetPgVg,
     handleChangeTargetNicStrength,
     handleChangeTargetAmount,

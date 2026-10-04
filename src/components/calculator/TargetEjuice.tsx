@@ -17,7 +17,7 @@ export default function TargetEjuice({
     handleChangeTargetNicStrength,
     targetAmount,
     handleChangeTargetAmount,
-    zeroNicotineMode,
+    showNicotine,
   } = calculator;
 
   return (
@@ -61,7 +61,7 @@ export default function TargetEjuice({
         />
       </div>
       <hr />
-      {!zeroNicotineMode && (
+      {showNicotine && (
         <>
           <div className="row">
             <h5>Strength:</h5>

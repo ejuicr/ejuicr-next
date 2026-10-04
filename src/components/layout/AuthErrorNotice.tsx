@@ -7,6 +7,8 @@ const MESSAGES: Record<string, string> = {
   google: "Google sign-in failed. Please try again.",
   "google-email":
     "Your Google account did not share an email address, which is required to sign in.",
+  "google-email-unverified":
+    "Google has not verified that email address, so it cannot be used to sign in. Verify it with Google or sign up with email instead.",
   twitter: "Twitter sign-in failed. Please try again.",
   "twitter-email":
     "Your Twitter account did not share an email address, which is required to sign in. You may need to grant email access to ejuicr in your Twitter settings.",

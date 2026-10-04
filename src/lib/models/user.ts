@@ -11,14 +11,26 @@ const userSchema = new Schema(
   {
     email: {
       type: String,
-      min: 8,
+      trim: true,
+      lowercase: true,
       unique: true,
       required: true,
     },
     password: {
       type: String,
-      min: 6,
-      max: 255,
+      minLength: 6,
+      maxLength: 250,
+    },
+    // Bumped on password changes to revoke previously issued sessions.
+    sessionVersion: {
+      type: Number,
+      default: 0,
+      required: true,
+    },
+    // Single-use nonce for password-reset links; cleared when consumed.
+    passwordResetNonce: {
+      type: String,
+      default: null,
     },
     authProvider: {
       type: String,

@@ -8,6 +8,14 @@ export function roundToTwoDecimalPlaces(num: number): number {
   return +(Math.round(Number(`${num}e+2`)) + "e-2");
 }
 
+// Format a measured amount for display, keeping two decimals and marking
+// positive amounts that are too small to display as "<0.01".
+export function formatMeasurement(value: number): string {
+  const rounded = roundToTwoDecimalPlaces(value);
+  if (rounded === 0 && value > 0) return "<0.01";
+  return `${rounded}`;
+}
+
 // Parse the input of target values
 export function parseNumberInput(value: string | number): number {
   // Enforce minimum of 0
@@ -76,12 +84,20 @@ export function validateEmail(email: string): boolean {
   return regex.test(email);
 }
 
+/** bcrypt only hashes the first 72 bytes, so longer passwords are rejected. */
+export const PASSWORD_MAX_BYTES = 72;
+
+// Return the UTF-8 byte length of a string.
+export function passwordByteLength(password: string): number {
+  return new TextEncoder().encode(password).length;
+}
+
 // Check that password is valid
 export function validatePassword(password: string): true | string {
   if (password.length < 6)
     return "Password is too short.  It must be at least 6 characters.";
-  if (password.length > 250)
-    return "Password is too long.  It must not be more than 250 characters.";
+  if (passwordByteLength(password) > PASSWORD_MAX_BYTES)
+    return "Password is too long.  It must not be more than 72 bytes.";
   return true;
 }
 

@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 export default function PageHeading({ children }: { children: ReactNode }) {
   return (
     <>
-      <h3>{children}</h3>
+      <h1>{children}</h1>
       <hr />
     </>
   );

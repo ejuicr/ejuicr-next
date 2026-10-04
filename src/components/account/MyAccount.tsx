@@ -8,6 +8,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faEnvelope } from "@fortawesome/free-solid-svg-icons";
 import { faGoogle, faTwitter } from "@fortawesome/free-brands-svg-icons";
 import { useAuth } from "@/components/providers/AuthProvider";
+import Button from "@/components/ui/Button";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import InputBorder from "@/components/ui/InputBorder";
 import { ErrorMessage, SuccessMessage } from "@/components/ui/Messages";
@@ -189,9 +190,6 @@ export default function MyAccount() {
     }
   };
 
-  const removeButtonClass =
-    "bg-transparent p-0 pt-1 font-normal text-brand-red hover:bg-transparent hover:text-brand-pink active:bg-transparent";
-
   if (isLoading) {
     return (
       <div>
@@ -245,19 +243,15 @@ export default function MyAccount() {
             </p>
           )}
           <p className="text-[1.15rem]">
-            <button
-              type="button"
-              className="mt-2 text-base"
-              onClick={handleLogout}
-            >
+            <Button variant="link" className="mt-2 text-base" onClick={handleLogout}>
               Sign Out
-            </button>
+            </Button>
           </p>
         </div>
 
         {(user.hasTwitterLinked || user.hasGoogleLinked) && (
           <>
-            <h4>Linked Accounts</h4>
+            <h2 className="mt-10 text-[1.75rem]">Linked Accounts</h2>
             <hr />
             <p>
               These accounts are linked to your ejuicr account so you can sign
@@ -278,7 +272,6 @@ export default function MyAccount() {
                   name="Google"
                   shared="Display name, email, profile picture."
                   onRemove={() => setAccountToUnlink("google")}
-                  removeButtonClass={removeButtonClass}
                 />
               )}
               {user.hasTwitterLinked && (
@@ -294,7 +287,6 @@ export default function MyAccount() {
                   name="Twitter"
                   shared="Handle, display name, email, profile picture."
                   onRemove={() => setAccountToUnlink("twitter")}
-                  removeButtonClass={removeButtonClass}
                 />
               )}
             </div>
@@ -303,7 +295,7 @@ export default function MyAccount() {
 
         {!user.hasPassword && (
           <>
-            <h4>Set Password</h4>
+            <h2 className="mt-10 text-[1.75rem]">Set Password</h2>
             <hr />
             {(isLoadingChangePassword && <Spinner />) || (
               <form onSubmit={onSubmitSetPassword}>
@@ -312,6 +304,7 @@ export default function MyAccount() {
                     <input
                       type="password"
                       autoComplete="off"
+                      aria-label="New password"
                       placeholder="Password"
                       value={newPassword}
                       onChange={(event) => setNewPassword(event.target.value)}
@@ -323,6 +316,7 @@ export default function MyAccount() {
                     <input
                       type="password"
                       autoComplete="off"
+                      aria-label="Confirm new password"
                       placeholder="Confirm Password"
                       value={newPasswordConfirm}
                       onChange={(event) =>
@@ -343,7 +337,7 @@ export default function MyAccount() {
 
         {user.hasPassword && (
           <>
-            <h4>Change Password</h4>
+            <h2 className="mt-10 text-[1.75rem]">Change Password</h2>
             <hr />
             {(isLoadingChangePassword && <Spinner />) || (
               <form onSubmit={onSubmitChangePassword}>
@@ -351,6 +345,7 @@ export default function MyAccount() {
                   <InputBorder className="block w-full">
                     <input
                       type="password"
+                      aria-label="Current password"
                       placeholder="Current Password"
                       value={password}
                       onChange={(event) => setPassword(event.target.value)}
@@ -362,6 +357,7 @@ export default function MyAccount() {
                     <input
                       type="password"
                       autoComplete="off"
+                      aria-label="New password"
                       placeholder="New Password"
                       value={newPassword}
                       onChange={(event) => setNewPassword(event.target.value)}
@@ -373,6 +369,7 @@ export default function MyAccount() {
                     <input
                       type="password"
                       autoComplete="off"
+                      aria-label="Confirm new password"
                       placeholder="Confirm New Password"
                       value={newPasswordConfirm}
                       onChange={(event) =>
@@ -391,7 +388,7 @@ export default function MyAccount() {
           </>
         )}
 
-        <h4>Delete Account</h4>
+        <h2 className="mt-10 text-[1.75rem]">Delete Account</h2>
         <hr />
         <p>
           You can permanently delete your ejuicr account and personal data from
@@ -408,7 +405,10 @@ export default function MyAccount() {
       </div>
 
       {accountToUnlink && (
-        <ConfirmDialog onCancel={() => setAccountToUnlink(null)}>
+        <ConfirmDialog
+          label={`Unlink ${capitalizeFirstLetter(accountToUnlink)} account`}
+          onCancel={() => setAccountToUnlink(null)}
+        >
           {!user.hasPassword && numberOfLinkedAccounts < 2 ? (
             <>
               <p>
@@ -459,7 +459,10 @@ export default function MyAccount() {
       )}
 
       {showDeleteDialogue && (
-        <ConfirmDialog onCancel={() => setShowDeleteDialogue(false)}>
+        <ConfirmDialog
+          label="Delete account"
+          onCancel={() => setShowDeleteDialogue(false)}
+        >
           <p>
             The following data will be <strong>permanently deleted</strong>:
           </p>
@@ -505,25 +508,27 @@ function LinkedAccount({
   name,
   shared,
   onRemove,
-  removeButtonClass,
 }: {
   logo: ReactNode;
   name: string;
   shared: string;
   onRemove: () => void;
-  removeButtonClass: string;
 }) {
   return (
     <div className="flex first:pb-6 min-[500px]:w-1/2 min-[500px]:first:pr-6 min-[500px]:first:pb-0">
       <div className="mr-5 mt-4 h-12 w-12 shrink-0">{logo}</div>
       <div>
-        <h5 className="text-cream">{name}</h5>
-        <h6 className="m-0 text-[0.8rem]">Data Shared:</h6>
+        <p className="m-0 text-cream">{name}</p>
+        <p className="m-0 text-[0.8rem]">Data Shared:</p>
         <p className="m-0 text-[0.8rem]">{shared}</p>
         <p className="m-0 text-[0.8rem]">
-          <button type="button" className={removeButtonClass} onClick={onRemove}>
+          <Button
+            variant="link"
+            className="pt-1 text-brand-red"
+            onClick={onRemove}
+          >
             Remove
-          </button>
+          </Button>
         </p>
       </div>
     </div>

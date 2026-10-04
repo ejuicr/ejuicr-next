@@ -5,9 +5,9 @@ export const metadata = { title: "Contribute" };
 export default function ContributePage() {
   return (
     <>
-      <h3>Contribute</h3>
+      <h1>Contribute</h1>
       <hr />
-      <h4>Send Feedback</h4>
+      <h2 className="mt-10 text-[1.75rem]">Send Feedback</h2>
       <hr />
       <p>
         The easiest way to contribute is to send us your feedback by email (
@@ -35,7 +35,7 @@ export default function ContributePage() {
         <li>Does ejuicr fail on any devices you&apos;ve tried?</li>
         <li>How likely are you to recommend ejuicr to a friend?</li>
       </ul>
-      <h4>Github</h4>
+      <h2 className="mt-10 text-[1.75rem]">Github</h2>
       <hr />
       <p>
         The source code for ejuicr is available on{" "}
@@ -65,7 +65,7 @@ export default function ContributePage() {
         codebase. We kindly ask that you clearly document the changes you have
         made.
       </p>
-      <h4>Donate</h4>
+      <h2 className="mt-10 text-[1.75rem]">Donate</h2>
       <hr />
       <p>
         If you&apos;d like to throw a couple bucks our way to help with server

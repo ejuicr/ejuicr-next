@@ -5,9 +5,9 @@ export const metadata = { title: "Help" };
 export default function HelpPage() {
   return (
     <>
-      <h3>Help</h3>
+      <h1>Help</h1>
       <hr />
-      <h4>Contact Support</h4>
+      <h2 className="mt-10 text-[1.75rem]">Contact Support</h2>
       <hr />
       <p>
         If you&apos;re having trouble with ejuicr and would like to reach out
@@ -22,7 +22,7 @@ export default function HelpPage() {
         </a>{" "}
         but you may have to wait a bit longer for a reply.
       </p>
-      <h4>Send Feedback</h4>
+      <h2 className="mt-10 text-[1.75rem]">Send Feedback</h2>
       <hr />
       <p>
         We appreciate any feedback you&apos;d like to share! Please email{" "}

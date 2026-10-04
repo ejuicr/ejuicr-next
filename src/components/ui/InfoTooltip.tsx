@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCircleQuestion } from "@fortawesome/free-solid-svg-icons";
+import Button from "@/components/ui/Button";
 
 /** Small click-to-open help tooltip used on the settings page. */
 export default function InfoTooltip({ content }: { content: string }) {
@@ -24,15 +25,15 @@ export default function InfoTooltip({ content }: { content: string }) {
 
   return (
     <span ref={containerRef} className="relative inline-block align-middle">
-      <button
-        type="button"
+      <Button
+        variant="ghost"
         aria-label={content}
         aria-expanded={open}
         onClick={() => setOpen((value) => !value)}
-        className="bg-transparent p-0 text-slateblue hover:bg-transparent active:bg-transparent"
+        className="text-secondary"
       >
         <FontAwesomeIcon icon={faCircleQuestion} />
-      </button>
+      </Button>
       {open && (
         <span
           role="tooltip"

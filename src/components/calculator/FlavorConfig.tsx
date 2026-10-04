@@ -27,6 +27,7 @@ export default function FlavorConfig({
               type="number"
               min="0"
               max="100"
+              aria-label={`Flavor ${index + 1} PG percentage`}
               value={String(flavor.pg)}
               onChange={(event) =>
                 handleChangeFlavorPgVg(index, event.target.value, "pg")
@@ -40,6 +41,7 @@ export default function FlavorConfig({
               type="number"
               min="0"
               max="100"
+              aria-label={`Flavor ${index + 1} VG percentage`}
               value={String(flavor.vg)}
               onChange={(event) =>
                 handleChangeFlavorPgVg(index, event.target.value, "vg")
@@ -51,6 +53,7 @@ export default function FlavorConfig({
           <NumberControls
             incrementTestId={`flavor${index + 1}ConfigPgIncBtn`}
             decrementTestId={`flavor${index + 1}ConfigPgDecBtn`}
+            label={`flavor ${index + 1} base PG percentage`}
             value={flavor.pg}
             step={5}
             onChange={(value) => handleChangeFlavorPgVg(index, value, "pg")}

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faBars } from "@fortawesome/free-solid-svg-icons";
+import Button from "@/components/ui/Button";
 
 export default function Header({ toggleMenu }: { toggleMenu: () => void }) {
   const pathname = usePathname();
@@ -33,15 +34,15 @@ export default function Header({ toggleMenu }: { toggleMenu: () => void }) {
             className="h-auto"
           />
         </Link>
-        <button
-          type="button"
+        <Button
+          variant="ghost"
           title="menu"
           aria-label="Open menu"
           onClick={toggleMenu}
-          className="bg-transparent p-0 text-[1.35rem] text-brand-cyan hover:bg-transparent active:bg-transparent"
+          className="text-[1.35rem] text-brand-cyan"
         >
           <FontAwesomeIcon icon={faBars} />
-        </button>
+        </Button>
       </div>
     </header>
   );

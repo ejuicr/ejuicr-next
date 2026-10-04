@@ -13,7 +13,7 @@ export default function UserProfile({ user }: { user: PublicUser }) {
       : "your profile picture";
 
   return (
-    <div className="mb-6 text-slateblue">
+    <div className="mb-6 text-secondary">
       <p className="mb-2 text-[0.9rem]">You are signed in as:</p>
       {profilePic && (
         <div className="mx-auto mb-2 w-fit rounded-full bg-gradient-to-br from-brand-purple to-brand-cyan p-[3px] leading-none">

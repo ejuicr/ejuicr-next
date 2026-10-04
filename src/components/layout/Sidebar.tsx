@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -16,16 +16,12 @@ import Login from "@/components/auth/Login";
 import Signup from "@/components/auth/Signup";
 import ResetPassword from "@/components/auth/ResetPassword";
 import UserProfile from "@/components/account/UserProfile";
+import Button from "@/components/ui/Button";
+import { useFocusTrap } from "@/components/ui/useFocusTrap";
 import { useAuth } from "@/components/providers/AuthProvider";
 import FooterMenu from "./FooterMenu";
 
 type View = "main" | "loginMenu" | "login" | "signup" | "reset";
-
-const iconButtonClass =
-  "bg-transparent p-0 text-[1.35rem] text-brand-cyan hover:bg-transparent hover:text-brand-pink active:bg-transparent active:text-brand-pink";
-
-const linkButtonClass =
-  "bg-transparent p-0 font-normal text-brand-cyan hover:bg-transparent hover:text-brand-pink active:bg-transparent active:text-brand-pink";
 
 export default function Sidebar({
   open,
@@ -37,19 +33,23 @@ export default function Sidebar({
   const [view, setView] = useState<View>("main");
   const { user, providers, logout } = useAuth();
   const router = useRouter();
+  const navRef = useRef<HTMLElement>(null);
 
   const handleClose = useCallback(() => {
     setView("main");
     onClose();
   }, [onClose]);
 
+  useFocusTrap(navRef, open);
+
   useEffect(() => {
+    if (!open) return;
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") handleClose();
     };
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [handleClose]);
+  }, [open, handleClose]);
 
   useEffect(() => {
     document.body.style.overflow = open ? "hidden" : "";
@@ -81,8 +81,11 @@ export default function Sidebar({
         )}
       />
       <nav
+        ref={navRef}
         aria-label="Main menu"
         aria-hidden={!open}
+        inert={!open}
+        tabIndex={-1}
         className={clsx(
           "sidebar-panel fixed top-0 right-0 z-50 h-full w-[250px] overflow-y-auto bg-ink p-4 text-center",
           open ? "translate-x-0" : "translate-x-full",
@@ -90,25 +93,25 @@ export default function Sidebar({
       >
         <div className="flex justify-between text-right">
           {view !== "main" && !user ? (
-            <button
-              type="button"
+            <Button
+              variant="ghost"
               aria-label="Back"
               onClick={() => setView("main")}
-              className={iconButtonClass}
+              className="text-[1.35rem] text-brand-cyan hover:text-brand-pink"
             >
               <FontAwesomeIcon icon={faArrowLeft} />
-            </button>
+            </Button>
           ) : (
             <div />
           )}
-          <button
-            type="button"
+          <Button
+            variant="ghost"
             aria-label="Close menu"
             onClick={handleClose}
-            className={iconButtonClass}
+            className="text-[1.35rem] text-brand-cyan hover:text-brand-pink"
           >
             <FontAwesomeIcon icon={faClose} />
-          </button>
+          </Button>
         </div>
 
         {user ? (
@@ -144,18 +147,14 @@ export default function Sidebar({
               </Link>
             </p>
             <p className="mb-6">
-              <button
-                type="button"
-                className={linkButtonClass}
-                onClick={handleLogout}
-              >
+              <Button variant="link" onClick={handleLogout}>
                 Logout
-              </button>
+              </Button>
             </p>
           </>
         ) : view === "loginMenu" ? (
           <>
-            <h3 className="mx-auto my-2">Login</h3>
+            <h2 className="mx-auto my-2 text-[2.25rem]">Login</h2>
             <ul className="m-0 list-none p-0">
               {providers.google && (
                 <li className="mb-6">

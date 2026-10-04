@@ -60,6 +60,7 @@ export default function UpdatePasswordForm({ token }: { token: string }) {
               <input
                 type="password"
                 autoComplete="new-password"
+                aria-label="New password"
                 placeholder="New Password"
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
@@ -70,6 +71,7 @@ export default function UpdatePasswordForm({ token }: { token: string }) {
             <InputBorder>
               <input
                 type="password"
+                aria-label="Confirm new password"
                 placeholder="Confirm Password"
                 value={passwordConfirm}
                 onChange={(event) => setPasswordConfirm(event.target.value)}

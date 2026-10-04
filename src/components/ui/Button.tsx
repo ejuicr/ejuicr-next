@@ -1,7 +1,15 @@
 import clsx from "clsx";
 import type { ButtonHTMLAttributes } from "react";
 
-type Variant = "primary" | "red" | "green";
+type Variant = "primary" | "red" | "green" | "ghost" | "link";
+
+const variantClasses: Record<Variant, string> = {
+  primary: "btn",
+  red: "btn btn-red",
+  green: "btn btn-green",
+  ghost: "btn-ghost",
+  link: "btn-link",
+};
 
 export default function Button({
   variant = "primary",
@@ -12,7 +20,7 @@ export default function Button({
   return (
     <button
       type={type}
-      className={clsx(variant !== "primary" && `btn-${variant}`, className)}
+      className={clsx(variantClasses[variant], className)}
       {...props}
     />
   );

@@ -26,6 +26,7 @@ export default function NicConfig({
             <input
               data-testid="nicConfigPgInput"
               type="number"
+              aria-label="Nicotine base PG percentage"
               value={String(nicConfig.pg)}
               min="0"
               max="100"
@@ -39,6 +40,7 @@ export default function NicConfig({
             <input
               data-testid="nicConfigVgInput"
               type="number"
+              aria-label="Nicotine base VG percentage"
               value={String(nicConfig.vg)}
               min="0"
               max="100"
@@ -52,6 +54,7 @@ export default function NicConfig({
           <NumberControls
             incrementTestId="nicConfigPgIncBtn"
             decrementTestId="nicConfigPgDecBtn"
+            label="nicotine base PG percentage"
             value={nicConfig.pg}
             step={5}
             onChange={(value) => handleChangeNicConfigPgVg(value, "pg")}
@@ -69,6 +72,7 @@ export default function NicConfig({
               data-testid="nicConfigStrengthInput"
               type="number"
               className="wide"
+              aria-label="Nicotine base strength"
               value={String(nicConfig.strength)}
               min="0"
               onChange={(event) =>
@@ -82,6 +86,7 @@ export default function NicConfig({
           <NumberControls
             incrementTestId="nicConfigStrengthIncBtn"
             decrementTestId="nicConfigStrengthDecBtn"
+            label="nicotine base strength"
             value={nicConfig.strength}
             step={5}
             min={0}

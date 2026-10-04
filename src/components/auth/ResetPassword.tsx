@@ -34,7 +34,7 @@ export default function ResetPassword({ onCancel }: { onCancel?: () => void }) {
 
   return (
     <>
-      <h3 className="my-2">Reset Password</h3>
+      <h2 className="my-2 text-[2.25rem]">Reset Password</h2>
       {error && <ErrorMessage>{error}</ErrorMessage>}
       {success && <SuccessMessage>{success}</SuccessMessage>}
       {isLoading && <Spinner />}
@@ -44,6 +44,7 @@ export default function ResetPassword({ onCancel }: { onCancel?: () => void }) {
             <InputBorder className="mx-auto block max-w-[260px]">
               <input
                 type="email"
+                aria-label="Email"
                 placeholder="Email"
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}

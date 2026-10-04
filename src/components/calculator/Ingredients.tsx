@@ -91,13 +91,13 @@ export default function Ingredients({
   };
 
   const rowClass = (invalid: boolean) =>
-    `row grid grid-cols-[4fr_1fr_1fr_1fr] items-center gap-4 [&>div:first-child]:justify-self-start ${
+    `row grid grid-cols-[4fr_1fr_1fr_1fr] items-center gap-4 justify-items-end [&>div:first-child]:justify-self-start ${
       invalid ? "text-brand-red" : ""
     }`;
 
   return (
     <div>
-      <h3 className="mt-4">Ingredients</h3>
+      <h2 className="mt-4 text-[2.25rem]">Ingredients</h2>
       <hr />
       {error && (
         <>

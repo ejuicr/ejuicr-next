@@ -3,7 +3,7 @@ export const metadata = { title: "Terms of Service" };
 export default function TermsOfServicePage() {
   return (
     <div>
-      <h3>Terms of Service</h3>
+      <h1>Terms of Service</h1>
       <hr />
       <p>
         By using this web app, you agree to be bound by the following terms and

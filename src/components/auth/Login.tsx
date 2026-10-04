@@ -3,6 +3,7 @@
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/providers/AuthProvider";
+import Button from "@/components/ui/Button";
 import InputBorder from "@/components/ui/InputBorder";
 import { ErrorMessage } from "@/components/ui/Messages";
 import Spinner from "@/components/ui/Spinner";
@@ -64,12 +65,9 @@ export default function Login({
     }
   };
 
-  const linkClass =
-    "bg-transparent p-0 font-normal text-brand-cyan hover:bg-transparent hover:text-brand-pink active:bg-transparent active:text-brand-pink";
-
   return (
     <>
-      {!hideHeading && <h3 className="my-2">Login</h3>}
+      {!hideHeading && <h2 className="my-2 text-[2.25rem]">Login</h2>}
       {error && <ErrorMessage>{error}</ErrorMessage>}
       {isLoading ? (
         <Spinner />
@@ -80,6 +78,7 @@ export default function Login({
               <InputBorder className="mx-auto block max-w-[260px]">
                 <input
                   type="email"
+                  aria-label="Email"
                   placeholder="Email"
                   value={email}
                   onChange={(event) => setEmail(event.target.value)}
@@ -90,6 +89,7 @@ export default function Login({
               <InputBorder className="mx-auto block max-w-[260px]">
                 <input
                   type="password"
+                  aria-label="Password"
                   placeholder="Password"
                   value={password}
                   onChange={(event) => setPassword(event.target.value)}
@@ -115,9 +115,9 @@ export default function Login({
             <p className="text-[0.9rem]">
               Need an account?
               <br />
-              <button type="button" className={linkClass} onClick={onSignup}>
+              <Button variant="link" onClick={onSignup}>
                 Sign up instead
-              </button>
+              </Button>
               .
             </p>
           )}
@@ -125,13 +125,9 @@ export default function Login({
             <p className="text-[0.9rem]">
               Forgot your password?
               <br />
-              <button
-                type="button"
-                className={linkClass}
-                onClick={onResetPassword}
-              >
+              <Button variant="link" onClick={onResetPassword}>
                 Reset it here
-              </button>
+              </Button>
               .
             </p>
           )}

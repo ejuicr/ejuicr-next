@@ -8,6 +8,7 @@ interface NumberControlsProps {
   value: number;
   step: number;
   min?: number;
+  label: string;
   onChange: (value: number) => void;
   incrementTestId?: string;
   decrementTestId?: string;
@@ -17,6 +18,7 @@ export default function NumberControls({
   value,
   step,
   min,
+  label,
   onChange,
   incrementTestId,
   decrementTestId,
@@ -35,7 +37,7 @@ export default function NumberControls({
       <button
         data-testid={decrementTestId}
         type="button"
-        aria-label="Decrease"
+        aria-label={`Decrease ${label}`}
         onClick={decrement}
         className="mr-[5px] h-[35px] w-[35px] p-0"
       >
@@ -44,7 +46,7 @@ export default function NumberControls({
       <button
         data-testid={incrementTestId}
         type="button"
-        aria-label="Increase"
+        aria-label={`Increase ${label}`}
         onClick={increment}
         className="h-[35px] w-[35px] p-0"
       >

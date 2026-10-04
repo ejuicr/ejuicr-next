@@ -3,7 +3,7 @@ export const metadata = { title: "Privacy Policy" };
 export default function PrivacyPolicyPage() {
   return (
     <div>
-      <h3>Privacy Policy</h3>
+      <h1>Privacy Policy</h1>
       <hr />
       <p>
         This privacy policy sets out how we collect, use, and protect any

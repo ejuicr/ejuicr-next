@@ -6,6 +6,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSortDown } from "@fortawesome/free-solid-svg-icons";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import DeleteButton from "@/components/ui/DeleteButton";
+import Button from "@/components/ui/Button";
 import { ErrorMessage } from "@/components/ui/Messages";
 import PageHeading from "@/components/ui/PageHeading";
 import Spinner from "@/components/ui/Spinner";
@@ -78,9 +79,6 @@ export default function RecipesList() {
     setIsSortByTitle(false);
   };
 
-  const sortLabelClass =
-    "cursor-pointer hover:text-brand-pink";
-
   return (
     <div>
       <PageHeading>Recipes</PageHeading>
@@ -90,18 +88,26 @@ export default function RecipesList() {
         ((recipes && recipes.length > 0 && (
           <>
             <div className="mb-4 flex">
-              <h5 className="grow text-[0.9rem]">
-                <span className={sortLabelClass} onClick={handleSortByTitle}>
+              <div className="grow text-[0.9rem] text-secondary">
+                <Button
+                  variant="link"
+                  className="text-[0.9rem] text-secondary"
+                  onClick={handleSortByTitle}
+                >
                   Title {isSortByTitle && <FontAwesomeIcon icon={faSortDown} />}
-                </span>
-              </h5>
-              <h5 className="text-right text-[0.9rem]">
-                <span className={sortLabelClass} onClick={handleSortByDate}>
+                </Button>
+              </div>
+              <div className="text-right text-[0.9rem] text-secondary">
+                <Button
+                  variant="link"
+                  className="text-[0.9rem] text-secondary"
+                  onClick={handleSortByDate}
+                >
                   Last Updated{" "}
                   {!isSortByTitle && <FontAwesomeIcon icon={faSortDown} />}
-                </span>
-              </h5>
-              <h5 className="w-[calc(35px+1em)]" />
+                </Button>
+              </div>
+              <div className="w-[calc(35px+1em)]" />
             </div>
             <ul className="m-0 list-none p-0">
               {recipes.map((recipe, index) => (
@@ -125,7 +131,10 @@ export default function RecipesList() {
           </>
         )) || <p className="text-center">You don&apos;t have any saved recipes.</p>)}
       {pendingDelete !== null && recipes?.[pendingDelete] && (
-        <ConfirmDialog onCancel={() => setPendingDelete(null)}>
+        <ConfirmDialog
+          label={`Delete recipe ${recipes[pendingDelete].name}`}
+          onCancel={() => setPendingDelete(null)}
+        >
           <p>
             Are you sure you want to delete{" "}
             <strong>&ldquo;{recipes[pendingDelete].name}&rdquo;</strong>?

@@ -105,7 +105,9 @@ export default function SaveRecipe({
 
   return (
     <div>
-      <h3 className="mt-4">{recipe ? "Save Changes" : "Save Recipe"}</h3>
+      <h2 className="mt-4 text-[2.25rem]">
+        {recipe ? "Save Changes" : "Save Recipe"}
+      </h2>
       <hr />
       {error && <ErrorMessage>{error}</ErrorMessage>}
       {success && <SuccessMessage>{success}</SuccessMessage>}
@@ -117,6 +119,7 @@ export default function SaveRecipe({
               <InputBorder className="w-full max-sm:mx-auto max-sm:block max-sm:max-w-[260px]">
                 <input
                   type="text"
+                  aria-label="Recipe title"
                   placeholder="Recipe Title"
                   value={(recipe && recipe.name) || recipeTitle}
                   readOnly={Boolean(recipe)}

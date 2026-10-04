@@ -4,6 +4,7 @@ import Ingredients from "./Ingredients";
 import SaveRecipe from "./SaveRecipe";
 import TargetEjuice from "./TargetEjuice";
 import { useCalculator } from "./useCalculator";
+import Button from "@/components/ui/Button";
 import type { Recipe } from "@/types";
 
 export default function Calculator({ recipe }: { recipe?: Recipe }) {
@@ -12,22 +13,23 @@ export default function Calculator({ recipe }: { recipe?: Recipe }) {
   return (
     <>
       <div>
-        {recipe && (
+        {recipe ? (
           <div className="recipe-header">
-            <h2 className="text-center">{recipe.name}</h2>
+            <h1 className="text-center">{recipe.name}</h1>
             <hr className="mb-8" />
           </div>
+        ) : (
+          <h1 className="sr-only">ejuicr calculator</h1>
         )}
         {!recipe && calculator.hasSavedDefaults && (
           <p className="my-2 text-right text-[0.9rem]">
-            <button
+            <Button
               data-testid="applyDefaultsBtn"
-              type="button"
-              className="bg-transparent p-0 font-normal text-brand-cyan hover:bg-transparent hover:text-brand-pink active:bg-transparent active:text-brand-pink"
+              variant="link"
               onClick={calculator.handleApplyDefaults}
             >
               Apply Saved Defaults
-            </button>
+            </Button>
           </p>
         )}
         <TargetEjuice calculator={calculator} />

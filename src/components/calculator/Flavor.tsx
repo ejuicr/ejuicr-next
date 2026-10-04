@@ -65,7 +65,7 @@ export default function Flavor({
   return (
     <>
       <div
-        className={`row flavor-results mb-4 grid grid-cols-[6fr_1fr] items-center text-right ${
+        className={`row flavor-results mb-4 grid grid-cols-[6fr_1fr] items-center text-right justify-items-end [&>div:first-child]:w-full ${
           isInvalid ? "text-brand-red" : ""
         }`}
       >
@@ -83,6 +83,7 @@ export default function Flavor({
               data-testid={`flavor${index + 1}NameInput`}
               type="text"
               maxLength={60}
+              aria-label={`Flavor ${index + 1} name`}
               value={name}
               onChange={(event) =>
                 handleChangeFlavorName(index, event.target.value)
@@ -95,6 +96,7 @@ export default function Flavor({
             <input
               data-testid={`flavor${index + 1}PercentInput`}
               type="number"
+              aria-label={`Flavor ${index + 1} percentage`}
               value={String(percentage)}
               min="0"
               max="100"
@@ -109,6 +111,7 @@ export default function Flavor({
           <NumberControls
             incrementTestId={`flavor${index + 1}PercentIncBtn`}
             decrementTestId={`flavor${index + 1}PercentDecBtn`}
+            label={`flavor ${index + 1} percentage`}
             value={percentage}
             step={0.5}
             min={0}

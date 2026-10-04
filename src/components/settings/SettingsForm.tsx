@@ -4,6 +4,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSave, faToggleOn } from "@fortawesome/free-solid-svg-icons";
 import clsx from "clsx";
+import Button from "@/components/ui/Button";
 import InfoTooltip from "@/components/ui/InfoTooltip";
 import InputBorder from "@/components/ui/InputBorder";
 import { ErrorMessage, SuccessMessage } from "@/components/ui/Messages";
@@ -214,7 +215,7 @@ export default function SettingsForm() {
         <Spinner />
       ) : (
         <>
-          <h4>Appearance</h4>
+          <h2 className="mt-10 text-[1.75rem]">Appearance</h2>
           <hr />
           <FormRow label={<label htmlFor="mixing-units">Mixing units:</label>}>
             <select
@@ -231,13 +232,14 @@ export default function SettingsForm() {
             </select>
           </FormRow>
           <hr />
-          <h4>Target Ejuice</h4>
+          <h2 className="mt-10 text-[1.75rem]">Target Ejuice</h2>
           <hr />
           <FormRow label="Default base:">
             <span className="label-left">PG/VG</span>
             <InputBorder>
               <input
                 type="number"
+                aria-label="Default target PG percentage"
                 value={String(targetPg)}
                 min="0"
                 max="100"
@@ -250,6 +252,7 @@ export default function SettingsForm() {
             <InputBorder>
               <input
                 type="number"
+                aria-label="Default target VG percentage"
                 value={String(targetVg)}
                 min="0"
                 max="100"
@@ -259,6 +262,7 @@ export default function SettingsForm() {
               />
             </InputBorder>
             <NumberControls
+              label="default target PG percentage"
               value={targetPg}
               step={5}
               onChange={(value) => handleChangeTargetPgVg(value, "pg")}
@@ -269,6 +273,7 @@ export default function SettingsForm() {
             <InputBorder>
               <input
                 type="number"
+                aria-label="Default target nicotine strength"
                 value={String(targetNicStrength)}
                 min="0"
                 onChange={(event) =>
@@ -278,6 +283,7 @@ export default function SettingsForm() {
             </InputBorder>
             <span className="label-right">mg/mL</span>
             <NumberControls
+              label="default target nicotine strength"
               value={targetNicStrength}
               step={1}
               min={0}
@@ -290,6 +296,7 @@ export default function SettingsForm() {
               <input
                 type="number"
                 className="wide"
+                aria-label="Default target amount"
                 value={String(targetAmount)}
                 min="0"
                 onChange={(event) =>
@@ -299,6 +306,7 @@ export default function SettingsForm() {
             </InputBorder>
             <span className="label-right">mL</span>
             <NumberControls
+              label="default target amount"
               value={targetAmount}
               step={10}
               min={0}
@@ -306,7 +314,7 @@ export default function SettingsForm() {
             />
           </FormRow>
           <hr />
-          <h4>Nicotine</h4>
+          <h2 className="mt-10 text-[1.75rem]">Nicotine</h2>
           <hr />
           <FormRow
             label={
@@ -319,19 +327,18 @@ export default function SettingsForm() {
             <span className="label-left">
               {zeroNicotineMode ? "Enabled" : "Disabled"}
             </span>
-            <button
-              type="button"
+            <Button
+              variant="ghost"
               role="switch"
               aria-checked={zeroNicotineMode}
               aria-label="Toggle zero nicotine mode"
               onClick={() => setZeroNicotineMode((value) => !value)}
-              className="bg-transparent p-0 hover:bg-transparent active:bg-transparent"
             >
               <FontAwesomeIcon
                 icon={faToggleOn}
                 className={toggleClass(zeroNicotineMode)}
               />
-            </button>
+            </Button>
           </FormRow>
           <hr />
           <FormRow label="Default strength (undiluted):">
@@ -339,6 +346,7 @@ export default function SettingsForm() {
               <input
                 type="number"
                 className="wide"
+                aria-label="Default nicotine base strength"
                 value={String(nicConfig.strength)}
                 min="0"
                 onChange={(event) =>
@@ -348,6 +356,7 @@ export default function SettingsForm() {
             </InputBorder>
             <span className="label-right">mg/mL</span>
             <NumberControls
+              label="default nicotine base strength"
               value={nicConfig.strength}
               step={5}
               min={0}
@@ -360,6 +369,7 @@ export default function SettingsForm() {
             <InputBorder>
               <input
                 type="number"
+                aria-label="Default nicotine base PG percentage"
                 value={String(nicConfig.pg)}
                 min="0"
                 max="100"
@@ -372,6 +382,7 @@ export default function SettingsForm() {
             <InputBorder>
               <input
                 type="number"
+                aria-label="Default nicotine base VG percentage"
                 value={String(nicConfig.vg)}
                 min="0"
                 max="100"
@@ -381,19 +392,21 @@ export default function SettingsForm() {
               />
             </InputBorder>
             <NumberControls
+              label="default nicotine base PG percentage"
               value={nicConfig.pg}
               step={5}
               onChange={(value) => handleChangeNicConfigPgVg(value, "pg")}
             />
           </FormRow>
           <hr />
-          <h4>Flavors</h4>
+          <h2 className="mt-10 text-[1.75rem]">Flavors</h2>
           <hr />
           <FormRow label="Default base:">
             <span className="label-left">PG/VG</span>
             <InputBorder>
               <input
                 type="number"
+                aria-label="Default flavor base PG percentage"
                 value={String(flavorConfig.pg)}
                 min="0"
                 max="100"
@@ -406,6 +419,7 @@ export default function SettingsForm() {
             <InputBorder>
               <input
                 type="number"
+                aria-label="Default flavor base VG percentage"
                 value={String(flavorConfig.vg)}
                 min="0"
                 max="100"
@@ -415,6 +429,7 @@ export default function SettingsForm() {
               />
             </InputBorder>
             <NumberControls
+              label="default flavor base PG percentage"
               value={flavorConfig.pg}
               step={5}
               onChange={(value) => handleChangeFlavorConfigPgVg(value, "pg")}
@@ -425,6 +440,7 @@ export default function SettingsForm() {
             <InputBorder>
               <input
                 type="number"
+                aria-label="Default flavor percentage"
                 value={String(flavorConfig.percentage)}
                 min="0"
                 onChange={(event) =>
@@ -434,6 +450,7 @@ export default function SettingsForm() {
             </InputBorder>
             <span className="label-right">%</span>
             <NumberControls
+              label="default flavor percentage"
               value={flavorConfig.percentage}
               step={0.5}
               min={0}

@@ -21,9 +21,11 @@ export default function AppShell({ children }: { children: ReactNode }) {
       <Suspense fallback={null}>
         <AuthErrorNotice />
       </Suspense>
-      <Header toggleMenu={() => setIsSidebarOpen(true)} />
-      <main>{children}</main>
-      <Footer />
+      <div className="flex min-h-dvh flex-col">
+        <Header toggleMenu={() => setIsSidebarOpen(true)} />
+        <main className="grow">{children}</main>
+        <Footer />
+      </div>
       <Sidebar open={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
     </>
   );

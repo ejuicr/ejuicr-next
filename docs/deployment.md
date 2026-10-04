@@ -184,6 +184,68 @@ unique partial indexes on `googleId`/`twitterId`, it must report zero
 duplicate provider IDs in staging and production; note that unlinked accounts
 store an empty string, so any index must exclude empty and missing values.
 
+## Backup and restore
+
+Atlas M0 has **no automated backups**, so the maintainer owns a manual
+routine. This section is the procedure, not an automated system: nothing here
+runs on a schedule by itself.
+
+- **Owner:** the maintainer (Jim Farrugia).
+- **Cadence:** weekly, and before any risky migration or data change.
+- **Storage:** gzipped `mongodump` archives in a directory outside the
+  repository (for example `~/backups/ejuicr/`), on an encrypted disk. Never
+  commit a dump.
+- **Retention:** keep the eight most recent weekly archives (about two
+  months). Delete older archives only after the new dump has been written
+  successfully and verified as non-empty.
+- A weekly dump also opens a connection, which helps prevent the free
+  cluster's 30-day idle auto-pause.
+
+### Weekly backup
+
+Requires the MongoDB Database Tools (`mongodump`) locally and cluster access.
+The existing database user has `readWrite` on the ejuicr databases, which is
+sufficient. Export production and staging separately, substituting the
+cluster host and credentials from `MONGODB_URI`:
+
+```sh
+mkdir -p ~/backups/ejuicr
+mongodump \
+  --uri="mongodb+srv://<user>:<password>@<cluster>/ejuicr-production" \
+  --gzip --archive="$HOME/backups/ejuicr/ejuicr-production-$(date +%F).archive.gz"
+mongodump \
+  --uri="mongodb+srv://<user>:<password>@<cluster>/ejuicr-staging" \
+  --gzip --archive="$HOME/backups/ejuicr/ejuicr-staging-$(date +%F).archive.gz"
+```
+
+### Restore check (quarterly, or after changing this procedure)
+
+Restore the latest production archive into an isolated temporary database on
+the same cluster, verify it, then drop the temporary database:
+
+```sh
+mongorestore \
+  --uri="mongodb+srv://<user>:<password>@<cluster>/" \
+  --gzip --archive="$HOME/backups/ejuicr/ejuicr-production-YYYY-MM-DD.archive.gz" \
+  --nsFrom="ejuicr-production.*" \
+  --nsTo="ejuicr-restore-check-YYYY-MM-DD.*"
+node --env-file=.env.local scripts/inspect-duplicates.mjs \
+  --database ejuicr-restore-check-YYYY-MM-DD
+```
+
+Drop `ejuicr-restore-check-YYYY-MM-DD` afterwards (Atlas UI or `mongosh`).
+The check is successful when the restore completes, the audit runs against
+the restored database, and the document counts look plausible. Record it
+below; the table must contain real checks, not planned dates.
+
+| Date | Source archive | Restored database | Result | Verified by |
+| ---- | -------------- | ----------------- | ------ | ----------- |
+| — (no restore check recorded yet) | — | — | — | — |
+
+A full disaster recovery (restoring over `ejuicr-production` with
+`mongorestore --drop`) is destructive and requires the maintainer's explicit
+approval at the time.
+
 ## API compatibility
 
 JSON field names deliberately match the legacy Express API (`_id`,

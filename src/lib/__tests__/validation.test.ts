@@ -174,6 +174,41 @@ describe("parseRecipeInput", () => {
     ).toBe(400);
   });
 
+  it("rejects PG/VG ratios that do not add up to 100", () => {
+    const baseError = captureError(() =>
+      parseRecipeInput({ base: { pg: 80, vg: 80 } }),
+    );
+    expect(baseError.status).toBe(400);
+    expect(baseError.message).toMatch(/add up to 100/);
+
+    expect(
+      captureError(() =>
+        parseRecipeInput({
+          ingredients: {
+            nicotine: { strength: 100, base: { pg: 60, vg: 30 } },
+            flavors: [],
+          },
+        }),
+      ).status,
+    ).toBe(400);
+    expect(
+      captureError(() =>
+        parseRecipeInput({
+          ingredients: {
+            nicotine: { strength: 100, base: { pg: 100, vg: 0 } },
+            flavors: [{ name: "Mango", percentage: 8, base: { pg: 70, vg: 20 } }],
+          },
+        }),
+      ).status,
+    ).toBe(400);
+  });
+
+  it("accepts fractional ratios that add up to 100 within tolerance", () => {
+    expect(parseRecipeInput({ base: { pg: 33.33, vg: 66.67 } })).toEqual({
+      base: { pg: 33.33, vg: 66.67 },
+    });
+  });
+
   it("requires complete ingredient shapes", () => {
     expect(
       captureError(() => parseRecipeInput({ ingredients: { nicotine: {} } }))
@@ -270,6 +305,26 @@ describe("parseSettingsInput", () => {
       captureError(() =>
         parseSettingsInput({
           flavor: { percentage: 101, base: { pg: 100, vg: 0 } },
+        }),
+      ).status,
+    ).toBe(400);
+  });
+
+  it("rejects settings ratios that do not add up to 100", () => {
+    expect(
+      captureError(() => parseSettingsInput({ base: { pg: 80, vg: 80 } })).status,
+    ).toBe(400);
+    expect(
+      captureError(() =>
+        parseSettingsInput({
+          nicotine: { strength: 100, base: { pg: 50, vg: 40 } },
+        }),
+      ).status,
+    ).toBe(400);
+    expect(
+      captureError(() =>
+        parseSettingsInput({
+          flavor: { percentage: 5, base: { pg: 0, vg: 0 } },
         }),
       ).status,
     ).toBe(400);

@@ -3,6 +3,7 @@ import {
   calculateWeight,
   capitalizeFirstLetter,
   formatMeasurement,
+  isNormalizedRatio,
   isResultsInvalid,
   parseNumberInput,
   roundToTwoDecimalPlaces,
@@ -19,6 +20,25 @@ describe("roundToTwoDecimalPlaces", () => {
     expect(roundToTwoDecimalPlaces(1.234)).toBe(1.23);
     expect(roundToTwoDecimalPlaces(1.235)).toBe(1.24);
     expect(roundToTwoDecimalPlaces(1.8)).toBe(1.8);
+  });
+
+  it("rounds small scientific-notation values without turning them into NaN", () => {
+    expect(roundToTwoDecimalPlaces(1e-7)).toBe(0);
+    expect(roundToTwoDecimalPlaces(-1e-7)).toBe(0);
+    expect(roundToTwoDecimalPlaces(0.005)).toBe(0.01);
+  });
+
+  it("keeps large scientific-notation values finite", () => {
+    expect(roundToTwoDecimalPlaces(1e21)).toBe(1e21);
+    expect(Number.isFinite(roundToTwoDecimalPlaces(1e300))).toBe(true);
+    expect(roundToTwoDecimalPlaces(Number.MAX_VALUE)).toBe(Number.MAX_VALUE);
+  });
+
+  it("passes non-finite values through so callers can detect them", () => {
+    expect(Number.isNaN(roundToTwoDecimalPlaces(Number.NaN))).toBe(true);
+    expect(roundToTwoDecimalPlaces(Number.POSITIVE_INFINITY)).toBe(
+      Number.POSITIVE_INFINITY,
+    );
   });
 });
 
@@ -87,6 +107,32 @@ describe("isResultsInvalid", () => {
     expect(isResultsInvalid(1, -1, 1)).toBe(true);
     expect(isResultsInvalid(1, 1, -1)).toBe(true);
     expect(isResultsInvalid(1, 1, 1)).toBe(false);
+  });
+
+  it("is true when any value is not finite", () => {
+    expect(isResultsInvalid(Number.NaN, 1, 1)).toBe(true);
+    expect(isResultsInvalid(1, Number.POSITIVE_INFINITY, 1)).toBe(true);
+    expect(isResultsInvalid(1, 1, Number.NEGATIVE_INFINITY)).toBe(true);
+  });
+});
+
+describe("isNormalizedRatio", () => {
+  it("accepts ratios that add up to 100 within tolerance", () => {
+    expect(isNormalizedRatio(30, 70)).toBe(true);
+    expect(isNormalizedRatio(0, 100)).toBe(true);
+    expect(isNormalizedRatio(33.33, 66.67)).toBe(true);
+  });
+
+  it("rejects sums away from 100 and non-finite values", () => {
+    expect(isNormalizedRatio(80, 80)).toBe(false);
+    expect(isNormalizedRatio(50, 40)).toBe(false);
+    expect(isNormalizedRatio(Number.NaN, 70)).toBe(false);
+    expect(isNormalizedRatio(30, Number.POSITIVE_INFINITY)).toBe(false);
+  });
+
+  it("rejects out-of-range values even when they add up to 100", () => {
+    expect(isNormalizedRatio(105, -5)).toBe(false);
+    expect(isNormalizedRatio(-5, 105)).toBe(false);
   });
 });
 

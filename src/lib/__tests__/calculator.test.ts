@@ -95,6 +95,63 @@ describe("getCalculatorStatus", () => {
     expect(status.error).toBe("");
     expect(status.pgPercentage).toBeCloseTo(19);
   });
+
+  it("flags a target ratio that does not add up to 100", () => {
+    const input: CalculatorInput = { ...baseInput, targetPg: 80, targetVg: 80 };
+    const status = getCalculatorStatus(input, calculateResults(input));
+
+    expect(status.error).not.toBe("");
+    expect(status.pgInvalid).toBe(true);
+    expect(status.vgInvalid).toBe(true);
+  });
+
+  it("flags a nicotine or flavor carrier ratio that does not add up to 100", () => {
+    const nicInput: CalculatorInput = {
+      ...baseInput,
+      nicConfig: { strength: 100, pg: 80, vg: 80 },
+    };
+    expect(
+      getCalculatorStatus(nicInput, calculateResults(nicInput)).error,
+    ).not.toBe("");
+
+    const flavorInput: CalculatorInput = {
+      ...baseInput,
+      flavors: [{ name: "Broken", pg: 40, vg: 40, percentage: 5 }],
+    };
+    expect(
+      getCalculatorStatus(flavorInput, calculateResults(flavorInput)).error,
+    ).not.toBe("");
+  });
+
+  it("conserves the target volume for valid mixtures", () => {
+    const input: CalculatorInput = {
+      ...baseInput,
+      nicConfig: { strength: 48, pg: 50, vg: 50 },
+      flavors: [
+        { name: "Mango", pg: 70, vg: 30, percentage: 8 },
+        { name: "Menthol", pg: 0, vg: 100, percentage: 2 },
+      ],
+    };
+    const results = calculateResults(input);
+    const total =
+      results.nicResults.amount +
+      results.flavors.reduce((sum, flavor) => sum + flavor.amount, 0) +
+      results.pgRequired +
+      results.vgRequired;
+
+    expect(total).toBeCloseTo(input.targetAmount, 10);
+    expect(getCalculatorStatus(input, results).error).toBe("");
+  });
+
+  it("flags non-finite results", () => {
+    const input: CalculatorInput = {
+      ...baseInput,
+      targetAmount: Number.POSITIVE_INFINITY,
+    };
+    const status = getCalculatorStatus(input, calculateResults(input));
+
+    expect(status.error).not.toBe("");
+  });
 });
 
 describe("clampPercentage", () => {
@@ -204,5 +261,54 @@ describe("parseCalculatorDraft", () => {
     expect(parseCalculatorDraft(null)).toBeNull();
     expect(parseCalculatorDraft("draft")).toBeNull();
     expect(parseCalculatorDraft([])).toBeNull();
+  });
+
+  it("drops target PG/VG when the pair does not add up to 100", () => {
+    // The reproduced failure: a version-2 draft with 80/80, zero target
+    // nicotine, no flavors, and a 30 mL target used to restore a 160%-carrier
+    // mixture while reporting no error.
+    const draft = parseCalculatorDraft({
+      version: CALCULATOR_STORAGE_VERSION,
+      targetPg: 80,
+      targetVg: 80,
+      targetNicStrength: 0,
+      targetAmount: 30,
+      nicConfig: { strength: 100, pg: 100, vg: 0 },
+      flavors: [],
+    });
+
+    expect(draft).toEqual({
+      targetNicStrength: 0,
+      targetAmount: 30,
+      nicConfig: { strength: 100, pg: 100, vg: 0 },
+      flavors: [],
+    });
+    expect(draft).not.toHaveProperty("targetPg");
+    expect(draft).not.toHaveProperty("targetVg");
+
+    // Nothing usable remains when the draft only carries the bad pair.
+    expect(
+      parseCalculatorDraft({ targetPg: 80, targetVg: 80 }),
+    ).toBeNull();
+  });
+
+  it("drops nicotine and flavor ratios that do not add up to 100", () => {
+    const draft = parseCalculatorDraft({
+      nicConfig: { strength: 100, pg: 80, vg: 80 },
+      flavors: [
+        { name: "Bad carrier", pg: 60, vg: 60, percentage: 5 },
+        { name: "Good", pg: 100, vg: 0, percentage: 5 },
+      ],
+    });
+
+    expect(draft).toEqual({
+      flavors: [{ name: "Good", pg: 100, vg: 0, percentage: 5 }],
+    });
+  });
+
+  it("keeps a target pair that adds up to 100 within tolerance", () => {
+    expect(
+      parseCalculatorDraft({ targetPg: 33.33, targetVg: 66.67 }),
+    ).toEqual({ targetPg: 33.33, targetVg: 66.67 });
   });
 });

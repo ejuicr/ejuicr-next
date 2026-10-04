@@ -6,6 +6,7 @@
 
 import {
   calculateWeight,
+  isNormalizedRatio,
   isResultsInvalid,
   roundToTwoDecimalPlaces,
   totalFlavorPg,
@@ -133,24 +134,31 @@ export function getCalculatorStatus(
   const pgWeight = roundToTwoDecimalPlaces(results.pgRequired * 1.036);
   const vgWeight = roundToTwoDecimalPlaces(results.vgRequired * 1.26);
 
-  const nicInvalid = isResultsInvalid(
-    nicResults.percentage,
-    nicResults.amount,
-    nicResults.weight,
-  );
-  const pgInvalid = isResultsInvalid(
-    pgPercentage,
-    results.pgRequired,
-    pgWeight,
-  );
-  const vgInvalid = isResultsInvalid(
-    vgPercentage,
-    results.vgRequired,
-    vgWeight,
+  // Every carrier ratio must add up to 100. Inputs that fail this (for
+  // example a stored draft or legacy recipe with 80% PG and 80% VG) would
+  // otherwise produce valid-looking instructions for the wrong volume.
+  const targetRatioInvalid = !isNormalizedRatio(input.targetPg, input.targetVg);
+  const nicRatioInvalid = !isNormalizedRatio(nicConfig.pg, nicConfig.vg);
+  const flavorRatioInvalid = input.flavors.some(
+    (flavor) => !isNormalizedRatio(flavor.pg, flavor.vg),
   );
 
+  const nicInvalid =
+    nicRatioInvalid ||
+    isResultsInvalid(
+      nicResults.percentage,
+      nicResults.amount,
+      nicResults.weight,
+    );
+  const pgInvalid =
+    targetRatioInvalid ||
+    isResultsInvalid(pgPercentage, results.pgRequired, pgWeight);
+  const vgInvalid =
+    targetRatioInvalid ||
+    isResultsInvalid(vgPercentage, results.vgRequired, vgWeight);
+
   const error =
-    nicInvalid || pgInvalid || vgInvalid
+    nicInvalid || pgInvalid || vgInvalid || flavorRatioInvalid
       ? "The formula is not possible with the current values you have entered."
       : nicConfig.strength < targetNicStrength
         ? `Your desired strength of ${targetNicStrength}mg is not possible with this nicotine base. You will need to use a nicotine base liquid with a higher strength.`
@@ -201,6 +209,7 @@ function parseFlavorInput(value: unknown): FlavorInput | null {
   const vg = finiteInRange(value.vg, 0, 100);
   const percentage = finiteInRange(value.percentage, 0, 100);
   if (pg === null || vg === null || percentage === null) return null;
+  if (!isNormalizedRatio(pg, vg)) return null;
 
   return { name: value.name, pg, vg, percentage };
 }
@@ -224,11 +233,19 @@ export function parseCalculatorDraft(
 
   const draft: Partial<CalculatorInput> = {};
 
+  // The target ratio is a pair: a draft only restores PG/VG when both are
+  // present, in range, and add up to 100. Otherwise both are dropped and the
+  // calculator keeps its defaults instead of restoring an impossible mixture.
   const targetPg = finiteInRange(value.targetPg, 0, 100);
-  if (targetPg !== null) draft.targetPg = targetPg;
-
   const targetVg = finiteInRange(value.targetVg, 0, 100);
-  if (targetVg !== null) draft.targetVg = targetVg;
+  if (
+    targetPg !== null &&
+    targetVg !== null &&
+    isNormalizedRatio(targetPg, targetVg)
+  ) {
+    draft.targetPg = targetPg;
+    draft.targetVg = targetVg;
+  }
 
   const targetNicStrength = finiteInRange(
     value.targetNicStrength,
@@ -248,7 +265,12 @@ export function parseCalculatorDraft(
     );
     const pg = finiteInRange(value.nicConfig.pg, 0, 100);
     const vg = finiteInRange(value.nicConfig.vg, 0, 100);
-    if (strength !== null && pg !== null && vg !== null) {
+    if (
+      strength !== null &&
+      pg !== null &&
+      vg !== null &&
+      isNormalizedRatio(pg, vg)
+    ) {
       draft.nicConfig = { strength, pg, vg };
     }
   }

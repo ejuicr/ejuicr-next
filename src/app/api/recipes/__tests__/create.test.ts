@@ -109,4 +109,17 @@ describe("POST /api/recipes", () => {
     });
     expect(mocks.create).not.toHaveBeenCalled();
   });
+
+  it("rejects a recipe whose carrier ratio does not add up to 100", async () => {
+    const response = await POST(
+      jsonRequest({ ...allowedBody, base: { pg: 80, vg: 80 } }),
+      undefined,
+    );
+    const body = (await response.json()) as { message: string };
+
+    expect(response.status).toBe(400);
+    expect(body.message).toMatch(/add up to 100/);
+    expect(mocks.findOne).not.toHaveBeenCalled();
+    expect(mocks.create).not.toHaveBeenCalled();
+  });
 });

@@ -10,6 +10,7 @@
 import { ApiError } from "@/lib/api";
 import {
   PASSWORD_MAX_BYTES,
+  isNormalizedRatio,
   passwordByteLength,
   validateEmail,
 } from "@/lib/helpers";
@@ -93,10 +94,25 @@ function parseRatio(value: unknown, label: string): BaseRatio {
   if (!isPlainObject(value)) {
     throw new ApiError(400, `${label} PG/VG ratio is invalid.`);
   }
-  return {
-    pg: requireFiniteNumber(value.pg, `${label} PG/VG ratio is invalid.`, 0, 100),
-    vg: requireFiniteNumber(value.vg, `${label} PG/VG ratio is invalid.`, 0, 100),
-  };
+  const pg = requireFiniteNumber(
+    value.pg,
+    `${label} PG/VG ratio is invalid.`,
+    0,
+    100,
+  );
+  const vg = requireFiniteNumber(
+    value.vg,
+    `${label} PG/VG ratio is invalid.`,
+    0,
+    100,
+  );
+  // Each carrier ratio must be complete: a sum below 100 would leave part of
+  // the mixture unaccounted for, and a sum above 100 produces more liquid
+  // than the target volume.
+  if (!isNormalizedRatio(pg, vg)) {
+    throw new ApiError(400, `${label} PG/VG ratio must add up to 100.`);
+  }
+  return { pg, vg };
 }
 
 export interface RecipeInput {

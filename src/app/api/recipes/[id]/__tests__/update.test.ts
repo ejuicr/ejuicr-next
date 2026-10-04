@@ -158,4 +158,16 @@ describe("PUT /api/recipes/:id", () => {
 
     expect(mocks.findOneAndUpdate).not.toHaveBeenCalled();
   });
+
+  it("rejects a partial update that would introduce an impossible ratio", async () => {
+    const response = await PUT(
+      jsonRequest({ base: { pg: 80, vg: 80 } }),
+      routeContext,
+    );
+    const body = (await response.json()) as { message: string };
+
+    expect(response.status).toBe(400);
+    expect(body.message).toMatch(/add up to 100/);
+    expect(mocks.findOneAndUpdate).not.toHaveBeenCalled();
+  });
 });

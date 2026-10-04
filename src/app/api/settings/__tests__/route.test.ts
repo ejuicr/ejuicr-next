@@ -121,6 +121,7 @@ describe("POST /api/settings", () => {
       { ...allowedBody, amount: -5 },
       { ...allowedBody, nicotine: { strength: 100, base: { pg: 100 } } },
       { ...allowedBody, flavor: { percentage: 101, base: { pg: 100, vg: 0 } } },
+      { ...allowedBody, base: { pg: 80, vg: 80 } },
       [],
       "settings",
     ]) {

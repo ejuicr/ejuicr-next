@@ -3,9 +3,20 @@
  * (`src/helpers.js`) so the calculator behaves the same.
  */
 
-// Round a number to two decimal places
+// Round a number to two decimal places. Appending the exponent as text keeps
+// rounding stable for values such as 1.235, but that trick breaks when the
+// number is already written in scientific notation (for example 1e-7), so
+// those values fall back to scaling. Values at or above the safe-integer
+// range are already whole numbers, so rounding them is a no-op.
 export function roundToTwoDecimalPlaces(num: number): number {
-  return +(Math.round(Number(`${num}e+2`)) + "e-2");
+  if (!Number.isFinite(num)) return num;
+  if (Math.abs(num) >= Number.MAX_SAFE_INTEGER) return num;
+  const exponential = Number(`${num}e+2`);
+  if (Number.isFinite(exponential)) {
+    return Number(`${Math.round(exponential)}e-2`);
+  }
+  const rounded = Math.round(num * 100) / 100;
+  return rounded === 0 ? 0 : rounded;
 }
 
 // Format a measured amount for display, keeping two decimals and marking
@@ -54,13 +65,39 @@ export function totalFlavorVg(flavors: { vgAmount: number }[]): number {
   return flavors.reduce((acc, flavor) => acc + flavor.vgAmount, 0);
 }
 
-// Return true if results are invalid (below 0) else return false.
+// PG and VG ratios are percentages that must describe a complete carrier:
+// they add up to 100 within a tolerance wide enough to absorb floating-point
+// arithmetic (for example 33.33 + 66.67).
+export const RATIO_TOLERANCE = 0.01;
+
+// Return true when two carrier ratios each sit within 0–100 and add up to
+// 100 within RATIO_TOLERANCE.
+export function isNormalizedRatio(pg: number, vg: number): boolean {
+  return (
+    Number.isFinite(pg) &&
+    Number.isFinite(vg) &&
+    pg >= 0 &&
+    pg <= 100 &&
+    vg >= 0 &&
+    vg <= 100 &&
+    Math.abs(pg + vg - 100) <= RATIO_TOLERANCE
+  );
+}
+
+// Return true if results are invalid (not finite, or below 0) else return false.
 export function isResultsInvalid(
   percentage: number,
   volume: number,
   weight: number,
 ): boolean {
-  return percentage < 0 || volume < 0 || weight < 0;
+  return (
+    !Number.isFinite(percentage) ||
+    !Number.isFinite(volume) ||
+    !Number.isFinite(weight) ||
+    percentage < 0 ||
+    volume < 0 ||
+    weight < 0
+  );
 }
 
 // Calculate the weight of a liquid mixed from PG and/or VG

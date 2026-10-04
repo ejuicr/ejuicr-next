@@ -15,7 +15,11 @@ when the email matched, which allowed account takeover.
 **Decision:** `POST /api/user` rejects every existing email. Accounts created
 through OAuth add a password through the authenticated
 `POST /api/user/set-password`, which derives the account from the session and
-refuses to overwrite an existing password. My Account uses that endpoint.
+refuses to overwrite an existing password. The write is a conditional update
+filtered on "no password yet" and the session version observed when the
+request authenticated, so two simultaneous set-password requests cannot both
+win; the loser receives 409 without a refreshed session. My Account uses that
+endpoint.
 
 **Consequences:** Existing users cannot claim an account through signup; they
 sign in with their provider and set a password from My Account. Login keeps
@@ -34,11 +38,18 @@ password reset did not remove a session holder.
 carry the version and `getCurrentUser` rejects mismatches. Setting, changing,
 or resetting a password increments the version; signed-in flows re-issue a
 cookie for the current session. Tokens minted before versioning have no
-version and are treated as version 0.
+version and are treated as version 0. A signed-in change or set is a
+conditional write that also matches the credential state observed when the
+request authenticated (the old password hash, or the absence of one), so a
+change authorized against stale credentials cannot overwrite a reset or
+another change that landed first; that request fails with 409 and does not
+mint a session.
 
 **Consequences:** Every other session is revoked on a credential change while
 the current session stays signed in. Legacy sessions keep working until the
-account's first password change.
+account's first password change. The conflict response tells the caller to
+sign in again, which is required anyway because the version bump revoked the
+stale session.
 
 ## ADR-003 — Single-use, purpose-bound password-reset tokens
 
@@ -63,15 +74,27 @@ used" response. A successful reset also bumps `sessionVersion` (ADR-002).
 **Context:** Google was matched by email without checking verification, and
 last-sign-in-method protection existed only in the UI.
 
-**Decision:** Established Google links are matched by the immutable `sub`
-first. Attaching Google to an account or creating one from Google requires the
-`email_verified` claim. Unlinking Google or Twitter uses an atomic conditional
-update whose filter requires another sign-in method (password or the other
-provider) to remain.
+**Decision:** Established Google and Twitter links are matched by the
+immutable provider ID first (`sub`, `id`), so a linked account never resolves
+through an email that belongs to another account. Attaching Google to an
+account or creating one from Google requires the `email_verified` claim.
+Email-based linking is separate: if the email already belongs to an account
+with a different Twitter identity, the callback refuses with
+`authError=twitter-conflict`, and claiming an unlinked account is an atomic
+conditional update that only matches while no other provider identity has
+been attached, so two simultaneous links cannot both win. Unlinking Google or
+Twitter uses an atomic conditional update whose filter requires another
+sign-in method (password or the other provider) to remain.
 
 **Consequences:** Unverified provider emails are refused with
 `authError=google-email-unverified`; simultaneous unlink requests cannot leave
-an account without a sign-in method.
+an account without a sign-in method; a Twitter identity is never silently
+moved between accounts. Provider-ID fields are not yet uniquely indexed:
+adding a unique partial index requires inspecting existing data with
+`scripts/inspect-duplicates.mjs` first (it reports duplicate non-empty
+`googleId`/`twitterId` values), and the index must exclude the empty strings
+written during unlinking. Until then, deterministic resolution and the atomic
+claim are the application-level protection.
 
 ## ADR-005 — Password length limited to bcrypt's 72-byte boundary
 
@@ -151,14 +174,24 @@ are small, so this is effectively instantaneous.
 
 **Status:** Accepted · October 2026
 
-**Context:** Deleting an account left its settings document behind, despite
-the deletion dialog promising otherwise.
+**Context:** Deleting an account left its settings document behind, and a
+recipe creation or settings save that authenticated before deletion could
+insert after dependent cleanup and leave an orphan.
 
-**Decision:** Recipes and settings are deleted in parallel before the user
-document; only then is the session cookie cleared.
+**Decision:** Deletion marks the user document with `deleting: true` first
+(idempotent, so a retry is safe), then deletes recipes and settings in
+parallel, then the user document, and finally clears the session cookie.
+Dependent write routes (`POST /api/recipes`, `POST /api/settings`) re-check
+the account after writing through `accountAcceptingWrites`; if the account is
+gone or deleting, they remove their own record and return 409.
 
-**Consequences:** A partial failure leaves the account intact and retryable;
-a successful deletion removes all owned data. Orphaned records from older
+**Consequences:** A successful deletion removes all owned data even when
+writes overlap it: a write that lands before dependent cleanup is removed by
+that cleanup, and one that lands after it removes itself. A partial failure
+leaves the account intact with `deleting: true`, so reads still work, writes
+are refused, and retrying the deletion is safe. Wrapping deletion in a
+transaction alone would not close the write side, which is why the
+deletion-state protocol covers both paths. Orphaned records from older
 deletions were checked and none remained in production.
 
 ## ADR-011 — Calculator state is input-only and versioned
@@ -172,11 +205,18 @@ produce invalid mixes.
 **Decision:** localStorage key `calculator` stores a versioned (`version: 2`)
 input-only draft. Derived results are always recalculated; stored values are
 validated field by field and invalid values or flavor entries are dropped.
-Storage reads and writes are failure-tolerant.
+Carrier ratios (target base, nicotine base, flavor base) must be finite,
+within 0–100, and add up to 100 within a 0.01 tolerance; the API rejects
+anything else, the draft parser drops the affected values, and calculator
+status marks impossible mixtures invalid so Save stays disabled. Storage
+reads and writes are failure-tolerant.
 
 **Consequences:** Drafts survive reloads without carrying stale derived state.
 Legacy unversioned drafts and derived fields from older formats are ignored
-where invalid and migrated where possible.
+where invalid and migrated where possible. Legacy documents with
+non-normalized ratios load with an explicit error and cannot be saved until
+corrected, and non-finite results (for example from a corrupted target
+amount) are invalid rather than silently rendering `NaN` instructions.
 
 ## ADR-012 — Calculator initialization precedence
 
@@ -189,7 +229,13 @@ and zero-nicotine defaults could hide active nicotine in a saved recipe.
 draft or active edits, then saved defaults. Defaults apply to a fresh
 calculator or through the explicit "Apply Saved Defaults" action. Newly added
 flavors inherit saved flavor defaults, and nicotine controls are never hidden
-while `targetNicStrength > 0`.
+while `targetNicStrength > 0`. A settings request is recorded as loaded for an
+account only after it succeeds, so an auth refresh that replaces the user
+object while the request is pending retries instead of permanently cancelling
+it. Saved defaults are keyed to the account that loaded them; logging out or
+switching accounts stops offering and applying them (and stops inheriting
+flavor defaults) without replacing active inputs.
 
 **Consequences:** Saved defaults never silently replace an active draft, and
-displayed instructions always include every active ingredient.
+displayed instructions always include every active ingredient. A late
+response for a previous account cannot apply to the current one.

@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "license": "ISC",
+  "engines": {
+    "node": "22.x"
+  },
   "author": "Jim Farrugia <the.jim.farrugia@gmail.com> (https://jimfarrugia.com.au/)",
   "scripts": {
     "dev": "next dev",

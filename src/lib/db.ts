@@ -26,10 +26,16 @@ export async function connectDB(): Promise<typeof mongoose> {
   }
 
   if (!cached.promise) {
-    cached.promise = mongoose.connect(MONGODB_URI).catch((error) => {
-      cached.promise = null;
-      throw error;
-    });
+    cached.promise = mongoose
+      .connect(MONGODB_URI, {
+        // Serverless platforms scale horizontally; keep each instance's pool
+        // small so the free Atlas tier's connection limit is not exhausted.
+        maxPoolSize: 10,
+      })
+      .catch((error) => {
+        cached.promise = null;
+        throw error;
+      });
   }
 
   cached.conn = await cached.promise;

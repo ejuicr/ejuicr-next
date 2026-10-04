@@ -146,6 +146,29 @@ server, so existing data continues to work.
 
 ## Deployment
 
+### Vercel
+
+The app deploys to Vercel as a standard Next.js project.
+
+1. Import the GitHub repository into Vercel; the default build settings
+   (`next build`) work as-is.
+2. Set the function region to the region of your MongoDB Atlas cluster
+   (Project Settings → Functions). Vercel Hobby allows a single region.
+3. Add the environment variables listed above. Scope `MONGODB_URI` per
+   environment to match your database layout (for example
+   `ejuicr-production` for Production and `ejuicr-staging` for Preview).
+4. In Atlas, add `0.0.0.0/0` to Network Access and create a database user
+   limited to `readWrite` on the ejuicr databases.
+5. Deploy, then register the OAuth callbacks below using the assigned
+   `*.vercel.app` domain (or your custom domain).
+
+`APP_URL` only needs to be set for Production; preview deployments derive
+their URL from Vercel's system environment variables. Gmail SMTP uses port
+465, which Vercel allows (only port 25 is blocked). The `engines` field pins
+Node.js 22 for parity with local development.
+
+### Self-hosting
+
 Build and run the production server:
 
 ```

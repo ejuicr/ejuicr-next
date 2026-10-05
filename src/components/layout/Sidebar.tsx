@@ -159,7 +159,7 @@ export default function Sidebar({
                 <li className="mb-6">
                   <a
                     href="/api/auth/google"
-                    className="btn h-auto w-[200px] whitespace-nowrap bg-none bg-white text-[0.9rem] text-black leading-[normal] hover:bg-none hover:bg-[#f8f9fa] hover:text-black active:bg-[#e8eaed]"
+                    className="btn btn-white h-auto w-[200px] whitespace-nowrap text-[0.9rem] leading-[normal]"
                   >
                     <Image
                       src="/google-logo.svg"
@@ -176,7 +176,7 @@ export default function Sidebar({
                 <li className="mb-6">
                   <a
                     href="/api/auth/twitter"
-                    className="btn h-auto w-[200px] whitespace-nowrap bg-none bg-black text-[0.9rem] text-white leading-[normal] hover:bg-none hover:bg-[#262626] hover:text-white active:bg-[#333333]"
+                    className="btn btn-black h-auto w-[200px] whitespace-nowrap text-[0.9rem] leading-[normal]"
                   >
                     <Image
                       src="/x-logo.svg"

@@ -156,7 +156,7 @@ export default function SaveRecipe({
                   <li className="mb-4">
                     <a
                       href="/api/auth/google"
-                      className="btn h-auto bg-none bg-white px-[0.75em] py-[0.5em] text-[0.95rem] text-black leading-[normal] hover:bg-none hover:bg-[#f8f9fa] hover:text-black active:bg-[#e8eaed]"
+                      className="btn btn-white h-auto px-[0.75em] py-[0.5em] text-[0.95rem] leading-[normal]"
                     >
                       <Image
                         src="/google-logo.svg"
@@ -173,7 +173,7 @@ export default function SaveRecipe({
                   <li className="mb-4">
                     <a
                       href="/api/auth/twitter"
-                      className="btn h-auto bg-none bg-black px-[0.75em] py-[0.5em] text-[0.95rem] text-white leading-[normal] hover:bg-none hover:bg-[#262626] hover:text-white active:bg-[#333333]"
+                      className="btn btn-black h-auto px-[0.75em] py-[0.5em] text-[0.95rem] leading-[normal]"
                     >
                       <Image
                         src="/x-logo.svg"

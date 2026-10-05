@@ -157,7 +157,7 @@ export default function Sidebar({
             <h2 className="mx-auto my-[0.5em] text-[2.25rem]">Login</h2>
             <ul className="m-0 list-none p-0">
               {providers.google && (
-                <li className="mb-6">
+                <li className="mb-6 h-10">
                   <a
                     href="/api/auth/google"
                     className="inline-block"
@@ -176,7 +176,7 @@ export default function Sidebar({
                 <li className="mb-6">
                   <a
                     href="/api/auth/twitter"
-                    className="btn w-[184px] text-[0.9rem]"
+                    className="btn h-auto w-[184px] text-[0.9rem] leading-[normal]"
                   >
                     <FontAwesomeIcon icon={faTwitter} className="mr-2" />
                     Sign in with Twitter
@@ -186,7 +186,7 @@ export default function Sidebar({
               <li className="mb-6">
                 <button
                   type="button"
-                  className="w-[184px] text-[0.9rem]"
+                  className="h-auto w-[184px] text-[0.9rem] leading-[normal]"
                   onClick={() => setView("login")}
                 >
                   <FontAwesomeIcon icon={faEnvelope} className="mr-2" />
@@ -196,7 +196,7 @@ export default function Sidebar({
               <li className="mb-6">
                 <button
                   type="button"
-                  className="w-[184px] text-[0.9rem]"
+                  className="h-auto w-[184px] text-[0.9rem] leading-[normal]"
                   onClick={() => setView("signup")}
                 >
                   <FontAwesomeIcon icon={faEnvelope} className="mr-2" />

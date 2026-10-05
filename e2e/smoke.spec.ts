@@ -175,6 +175,23 @@ test.describe("layout and accessibility", () => {
     const nav = page.getByRole("navigation", { name: "Main menu" });
     await page.getByRole("button", { name: "Open menu" }).click();
     await nav.getByRole("link", { name: "Login/Signup" }).click();
+
+    // Sign-in buttons keep an even vertical gap whether or not the OAuth
+    // providers are configured.
+    const signInGaps = await nav
+      .locator("ul")
+      .first()
+      .evaluate((ul) => {
+        const rects = Array.from(ul.children)
+          .map((li) => li.querySelector("button, a"))
+          .filter((el): el is HTMLElement => el !== null)
+          .map((el) => el.getBoundingClientRect());
+        return rects
+          .slice(1)
+          .map((rect, index) => Math.round(rect.top - rects[index].bottom));
+      });
+    expect(new Set(signInGaps).size).toBeLessThanOrEqual(1);
+
     await nav.getByRole("button", { name: "Sign in with Email" }).click();
     await expect(page.getByLabel("Email")).toBeVisible();
     await expect(page.getByLabel("Password")).toBeVisible();

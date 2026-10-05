@@ -4,7 +4,6 @@ import { useState } from "react";
 import Image from "next/image";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faEnvelope, faSave } from "@fortawesome/free-solid-svg-icons";
-import { faTwitter } from "@fortawesome/free-brands-svg-icons";
 import Login from "@/components/auth/Login";
 import { useAuth } from "@/components/providers/AuthProvider";
 import InputBorder from "@/components/ui/InputBorder";
@@ -154,18 +153,19 @@ export default function SaveRecipe({
             <div className="w-fit pl-4 max-sm:mt-6 max-sm:w-full max-sm:p-0 max-sm:text-center">
               <ul className="m-0 list-none p-0">
                 {providers.google && (
-                  <li className="mb-4 h-10">
+                  <li className="mb-4">
                     <a
                       href="/api/auth/google"
-                      className="inline-block"
-                      aria-label="Sign in with Google"
+                      className="btn h-auto bg-none bg-white px-[0.75em] py-[0.5em] text-[0.95rem] text-black leading-[normal] hover:bg-none hover:bg-[#f8f9fa] hover:text-black active:bg-[#e8eaed]"
                     >
                       <Image
-                        src="/google-signin-btn.png"
-                        alt="Sign in with Google"
-                        width={185}
-                        height={40}
+                        src="/google-logo.svg"
+                        alt=""
+                        width={18}
+                        height={18}
+                        className="mr-2"
                       />
+                      Sign in with Google
                     </a>
                   </li>
                 )}
@@ -173,10 +173,16 @@ export default function SaveRecipe({
                   <li className="mb-4">
                     <a
                       href="/api/auth/twitter"
-                      className="btn inline-block h-auto px-[0.75em] py-[0.5em] text-[0.95rem] leading-[normal]"
+                      className="btn h-auto bg-none bg-black px-[0.75em] py-[0.5em] text-[0.95rem] text-white leading-[normal] hover:bg-none hover:bg-[#262626] hover:text-white active:bg-[#333333]"
                     >
-                      <FontAwesomeIcon icon={faTwitter} className="mr-2" />
-                      Sign in with Twitter
+                      <Image
+                        src="/x-logo.svg"
+                        alt=""
+                        width={18}
+                        height={18}
+                        className="mr-2"
+                      />
+                      Sign in with X
                     </a>
                   </li>
                 )}

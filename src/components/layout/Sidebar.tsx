@@ -10,7 +10,6 @@ import {
   faClose,
   faEnvelope,
 } from "@fortawesome/free-solid-svg-icons";
-import { faTwitter } from "@fortawesome/free-brands-svg-icons";
 import clsx from "clsx";
 import Login from "@/components/auth/Login";
 import Signup from "@/components/auth/Signup";
@@ -157,18 +156,19 @@ export default function Sidebar({
             <h2 className="mx-auto my-[0.5em] text-[2.25rem]">Login</h2>
             <ul className="m-0 list-none p-0">
               {providers.google && (
-                <li className="mb-6 h-10">
+                <li className="mb-6">
                   <a
                     href="/api/auth/google"
-                    className="inline-block"
-                    aria-label="Sign in with Google"
+                    className="btn h-auto w-[200px] whitespace-nowrap bg-none bg-white text-[0.9rem] text-black leading-[normal] hover:bg-none hover:bg-[#f8f9fa] hover:text-black active:bg-[#e8eaed]"
                   >
                     <Image
-                      src="/google-signin-btn.png"
-                      alt="Sign in with Google"
-                      width={185}
-                      height={40}
+                      src="/google-logo.svg"
+                      alt=""
+                      width={18}
+                      height={18}
+                      className="mr-2"
                     />
+                    Sign in with Google
                   </a>
                 </li>
               )}
@@ -176,17 +176,23 @@ export default function Sidebar({
                 <li className="mb-6">
                   <a
                     href="/api/auth/twitter"
-                    className="btn h-auto w-[184px] text-[0.9rem] leading-[normal]"
+                    className="btn h-auto w-[200px] whitespace-nowrap bg-none bg-black text-[0.9rem] text-white leading-[normal] hover:bg-none hover:bg-[#262626] hover:text-white active:bg-[#333333]"
                   >
-                    <FontAwesomeIcon icon={faTwitter} className="mr-2" />
-                    Sign in with Twitter
+                    <Image
+                      src="/x-logo.svg"
+                      alt=""
+                      width={18}
+                      height={18}
+                      className="mr-2"
+                    />
+                    Sign in with X
                   </a>
                 </li>
               )}
               <li className="mb-6">
                 <button
                   type="button"
-                  className="h-auto w-[184px] text-[0.9rem] leading-[normal]"
+                  className="h-auto w-[200px] whitespace-nowrap text-[0.9rem] leading-[normal]"
                   onClick={() => setView("login")}
                 >
                   <FontAwesomeIcon icon={faEnvelope} className="mr-2" />
@@ -196,7 +202,7 @@ export default function Sidebar({
               <li className="mb-6">
                 <button
                   type="button"
-                  className="h-auto w-[184px] text-[0.9rem] leading-[normal]"
+                  className="h-auto w-[200px] whitespace-nowrap text-[0.9rem] leading-[normal]"
                   onClick={() => setView("signup")}
                 >
                   <FontAwesomeIcon icon={faEnvelope} className="mr-2" />

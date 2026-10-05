@@ -172,6 +172,22 @@ test.describe("layout and accessibility", () => {
 
   test("labels auth inputs and restores list markers", async ({ page }) => {
     await page.goto("/");
+
+    // The calculator's sign-in buttons keep an even vertical gap.
+    const saveRecipeGaps = await page
+      .locator("main ul")
+      .first()
+      .evaluate((ul) => {
+        const rects = Array.from(ul.children)
+          .map((li) => li.querySelector("button, a"))
+          .filter((el): el is HTMLElement => el !== null)
+          .map((el) => el.getBoundingClientRect());
+        return rects
+          .slice(1)
+          .map((rect, index) => Math.round(rect.top - rects[index].bottom));
+      });
+    expect(new Set(saveRecipeGaps).size).toBeLessThanOrEqual(1);
+
     const nav = page.getByRole("navigation", { name: "Main menu" });
     await page.getByRole("button", { name: "Open menu" }).click();
     await nav.getByRole("link", { name: "Login/Signup" }).click();

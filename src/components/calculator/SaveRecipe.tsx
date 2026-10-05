@@ -154,7 +154,7 @@ export default function SaveRecipe({
             <div className="w-fit pl-4 max-sm:mt-6 max-sm:w-full max-sm:p-0 max-sm:text-center">
               <ul className="m-0 list-none p-0">
                 {providers.google && (
-                  <li className="mb-4">
+                  <li className="mb-4 h-10">
                     <a
                       href="/api/auth/google"
                       className="inline-block"
@@ -173,7 +173,7 @@ export default function SaveRecipe({
                   <li className="mb-4">
                     <a
                       href="/api/auth/twitter"
-                      className="btn text-[0.95rem]"
+                      className="btn inline-block h-auto px-[0.75em] py-[0.5em] text-[0.95rem] leading-[normal]"
                     >
                       <FontAwesomeIcon icon={faTwitter} className="mr-2" />
                       Sign in with Twitter
@@ -183,7 +183,7 @@ export default function SaveRecipe({
                 <li className="mb-4">
                   <button
                     type="button"
-                    className="text-[0.95rem]"
+                    className="inline-block h-auto px-[0.75em] py-[0.5em] text-[0.95rem] leading-[normal]"
                     onClick={() => setShowLoginForm(true)}
                   >
                     <FontAwesomeIcon icon={faEnvelope} className="mr-2" />

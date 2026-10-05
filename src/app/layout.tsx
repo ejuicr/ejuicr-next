@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Bebas_Neue } from "next/font/google";
+import { preload } from "react-dom";
 import type { ReactNode } from "react";
 import AuthProvider from "@/components/providers/AuthProvider";
 import AppShell from "@/components/layout/AppShell";
@@ -36,6 +37,11 @@ export const viewport: Viewport = {
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
+  // Start the session lookup while the HTML is still parsing so it runs in
+  // parallel with the JS download; the AuthProvider fetch reuses it after
+  // hydration instead of starting a second request.
+  preload("/api/user/me", { as: "fetch", crossOrigin: "anonymous" });
+
   const providers = {
     google: Boolean(getGoogleCredentials()),
     twitter: Boolean(getTwitterCredentials()),
